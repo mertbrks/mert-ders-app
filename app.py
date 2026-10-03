@@ -487,5 +487,18 @@ def delete_note(note_id):
     flash('Not silindi.', 'info')
     return redirect(url_for('index'))
 
+@app.errorhandler(500)
+def internal_error(error):
+    import traceback
+    err_msg = traceback.format_exc()
+    print("500 ERROR TRACEBACK:\n", err_msg)
+    return f"""
+    <div style='background:#0B0F17; color:#F8FAFC; padding:40px; font-family:sans-serif;'>
+        <h2 style='color:#F43F5E;'>Uygulama Hatası (500)</h2>
+        <p>Aşağıdaki hata detayını inceleyebilirsiniz:</p>
+        <pre style='background:#141E33; padding:20px; border-radius:12px; color:#38BDF8; overflow:auto;'>{err_msg}</pre>
+    </div>
+    """, 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
