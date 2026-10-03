@@ -1,0 +1,330 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard | Mert Ders Takip{% endblock %}
+
+{% block content %}
+<!-- Top Header & Date -->
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-5">
+    <div>
+        <h1 class="h2 mb-1 fw-bold">Eğitmen Paneli 👋</h1>
+        <p class="text-secondary mb-0">Bugünkü ders programın, bekleyen tahsilatların ve hızlı aksiyonların.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <a href="{{ url_for('schedule') }}" class="btn-saas-primary">
+            <i class="bi bi-calendar-plus"></i>
+            <span>Ders Planla</span>
+        </a>
+        <a href="{{ url_for('students') }}" class="btn-saas-secondary">
+            <i class="bi bi-person-plus"></i>
+            <span>Öğrenci Ekle</span>
+        </a>
+    </div>
+</div>
+
+<!-- Stat KPI Cards -->
+<div class="row g-4 mb-5">
+    <div class="col-lg-4 col-md-6">
+        <div class="stat-widget">
+            <div class="stat-widget-glow"></div>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="stat-label">Bugünkü Dersler</span>
+                <span class="badge-pill-cyan"><i class="bi bi-calendar-check me-1"></i>Bugün</span>
+            </div>
+            <div class="stat-value">{{ todays_lessons|length }} <span class="fs-6 fw-normal text-secondary">Ders</span></div>
+            <small class="text-secondary mt-2 d-block">
+                {% if todays_lessons %}
+                    Bugün tamamlanmayı bekleyen dersleriniz var.
+                {% else %}
+                    Bugün için planlanmış ders bulunmuyor.
+                {% endif %}
+            </small>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 col-md-6">
+        <div class="stat-widget">
+            <div class="stat-widget-glow" style="background: radial-gradient(circle, var(--accent-amber-glow) 0%, transparent 70%);"></div>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="stat-label">Bekleyen Bakiye</span>
+                <span class="badge-pill-amber"><i class="bi bi-hourglass-split me-1"></i>Tahsilat</span>
+            </div>
+            <div class="stat-value text-white">₺{{ "{:,.0f}".format(total_pending) if total_pending else '0' }}</div>
+            <small class="text-secondary mt-2 d-block">Tamamlanan derslerden tahsil edilmemiş tutar.</small>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 col-md-12">
+        <div class="stat-widget">
+            <div class="stat-widget-glow" style="background: radial-gradient(circle, var(--accent-emerald-glow) 0%, transparent 70%);"></div>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="stat-label">Kayıtlı Öğrenciler</span>
+                <span class="badge-pill-emerald"><i class="bi bi-people me-1"></i>Portföy</span>
+            </div>
+            <div class="stat-value">{{ student_count }} <span class="fs-6 fw-normal text-secondary">Öğrenci</span></div>
+            <small class="text-secondary mt-2 d-block">Sistemde aktif takip edilen öğrenciler.</small>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-5">
+    <!-- Bugünkü Dersler Akışı -->
+    <div class="col-xl-7 col-lg-6">
+        <div class="saas-card h-100 d-flex flex-column">
+            <div class="saas-card-header d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-lightning-charge-fill text-warning"></i>
+                    <h5 class="mb-0 fw-bold">Bugünkü Dersler</h5>
+                </div>
+                <span class="badge-pill-cyan">{{ todays_lessons|length }} Kayıt</span>
+            </div>
+            
+            <div class="saas-card-body p-0 flex-grow-1">
+                {% if todays_lessons %}
+                <div class="list-group list-group-flush border-0">
+                    {% for lesson in todays_lessons %}
+                    <div class="list-group-item bg-transparent p-3 p-md-4 border-bottom" style="border-color: var(--border-subtle) !important;" id="lesson-row-{{ lesson.id }}">
+                        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold fs-5 text-white" style="width: 46px; height: 46px; background: rgba(14, 165, 233, 0.15); border: 1px solid rgba(14, 165, 233, 0.3);">
+                                    {{ lesson.full_name[0] }}
+                                </div>
+                                <div>
+                                    <h6 class="mb-1 fw-bold text-white fs-6">{{ lesson.full_name }}</h6>
+                                    <div class="d-flex align-items-center gap-2 text-secondary small">
+                                        <span><i class="bi bi-clock me-1"></i>{{ lesson.lesson_date.split('T')[1] if 'T' in lesson.lesson_date else lesson.lesson_date }}</span>
+                                        <span>•</span>
+                                        <span>{{ lesson.duration_minutes or 60 }} dk</span>
+                                        {% if lesson.topic %}
+                                        <span>•</span>
+                                        <span class="text-info">{{ lesson.topic }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex align-items-center gap-2 ms-auto ms-sm-0">
+                                <span id="status-pill-{{ lesson.id }}" class="{% if lesson.status == 'yapildi' %}badge-pill-emerald{% elif lesson.status == 'iptal' %}badge-pill-rose{% else %}badge-pill-cyan{% endif %}">
+                                    {% if lesson.status == 'yapildi' %}Yapıldı{% elif lesson.status == 'iptal' %}İptal{% else %}Planlandı{% endif %}
+                                </span>
+                                
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-sm btn-outline-success border-0 quick-status-btn" data-id="{{ lesson.id }}" data-status="yapildi" title="Yapıldı Olarak İşaretle" aria-label="Yapıldı">
+                                        <i class="bi bi-check2 fs-5"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger border-0 quick-status-btn" data-id="{{ lesson.id }}" data-status="iptal" title="İptal Edildi Olarak İşaretle" aria-label="İptal">
+                                        <i class="bi bi-x fs-5"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5 px-4">
+                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle);">
+                        <i class="bi bi-cup-hot fs-3 text-secondary"></i>
+                    </div>
+                    <h6 class="fw-bold text-white mb-1">Bugün Serbest Gün</h6>
+                    <p class="text-secondary small mb-0">Bugün için kayıtlı ders yok. Dinlenebilir veya yeni ders ekleyebilirsin.</p>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="saas-card-footer text-center">
+                <a href="{{ url_for('schedule') }}" class="btn-saas-secondary w-100 py-2">
+                    <span>Haftalık Takvime Git</span>
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sağ Kolon (Bekleyen Ödeme & Notlar) -->
+    <div class="col-xl-5 col-lg-6 d-flex flex-column gap-4">
+        <!-- Hızlı Bakiye Kartı -->
+        <div class="saas-card p-4 position-relative">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <span class="stat-label">Tahsilat Bekleyen</span>
+                    <h3 class="h2 fw-bold text-white mt-1 mb-0">₺{{ "{:,.0f}".format(total_pending) if total_pending else '0' }}</h3>
+                </div>
+                <div class="rounded-circle p-3" style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.25);">
+                    <i class="bi bi-wallet2 fs-4 text-warning"></i>
+                </div>
+            </div>
+            <p class="text-secondary small mb-3">İşlenen dersler arasından henüz ücreti alınmamış olanların dökümü.</p>
+            <a href="{{ url_for('payments') }}" class="btn-saas-secondary w-100">
+                <i class="bi bi-cash-stack"></i>
+                <span>Ödeme Tablosuna Git</span>
+            </a>
+        </div>
+        
+        <!-- Hızlı Not Defteri -->
+        <div class="saas-card flex-grow-1 d-flex flex-column">
+            <div class="saas-card-header d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-sticky-fill text-warning"></i>
+                    <h6 class="mb-0 fw-bold">Hızlı Notlar</h6>
+                </div>
+                <span class="text-secondary small">{{ quick_notes|length }} Not</span>
+            </div>
+            
+            <div class="saas-card-body flex-grow-1">
+                <form action="{{ url_for('add_note') }}" method="POST" class="mb-3">
+                    <div class="input-group">
+                        <input type="text" name="content" class="form-control" placeholder="Öğrenci veya ders ile ilgili not al..." required>
+                        <button type="submit" class="btn-saas-primary px-3" aria-label="Not Ekle">
+                            <i class="bi bi-plus-lg"></i>
+                        </button>
+                    </div>
+                </form>
+                
+                {% if quick_notes %}
+                <div class="d-flex flex-column gap-2" style="max-height: 260px; overflow-y: auto;">
+                    {% for note in quick_notes %}
+                    <div class="p-3 rounded d-flex justify-content-between align-items-start gap-2" style="background: rgba(255, 255, 255, 0.02); border-left: 3px solid var(--accent-amber); border-top: 1px solid var(--border-subtle); border-right: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle);">
+                        <div class="flex-grow-1 pe-2">
+                            <p class="mb-1 text-white small">{{ note.content }}</p>
+                            <small class="text-secondary" style="font-size: 0.72rem;">
+                                <i class="bi bi-clock me-1"></i>{{ note.created_at[:16] if note.created_at else '' }}
+                            </small>
+                        </div>
+                        <form action="{{ url_for('delete_note', note_id=note.id) }}" method="POST">
+                            <button type="submit" class="btn btn-sm text-secondary hover-scale p-0 border-0" title="Notu Sil" aria-label="Sil">
+                                <i class="bi bi-trash3 text-danger opacity-75"></i>
+                            </button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-secondary text-center small py-3 mb-0">Henüz kaydedilmiş notunuz bulunmuyor.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 6 Aylık Gelir Analizi Grafiği -->
+<div class="saas-card mb-4">
+    <div class="saas-card-header d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-bar-chart-fill text-info"></i>
+            <h5 class="mb-0 fw-bold">Son 6 Aylık Tahsilat Gelir Analizi</h5>
+        </div>
+        <span class="text-secondary small"><i class="bi bi-info-circle me-1"></i>Gerçekleşen tahsilatlar</span>
+    </div>
+    <div class="saas-card-body p-4">
+        <div style="height: 320px; width: 100%;">
+            <canvas id="incomeChart"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Quick status toggle with AJAX
+    const statusButtons = document.querySelectorAll('.quick-status-btn');
+    statusButtons.forEach(btn => {
+        btn.addEventListener('click', async function() {
+            const lessonId = this.dataset.id;
+            const newStatus = this.dataset.status;
+            
+            try {
+                const response = await fetch(`/api/lessons/${lessonId}/status`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    const pill = document.getElementById(`status-pill-${lessonId}`);
+                    if (pill) {
+                        pill.className = newStatus === 'yapildi' ? 'badge-pill-emerald' : 'badge-pill-rose';
+                        pill.textContent = newStatus === 'yapildi' ? 'Yapıldı' : 'İptal';
+                    }
+                } else {
+                    alert('Hata: ' + (result.error || 'İşlem gerçekleştirilemedi.'));
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        });
+    });
+
+    // Chart.js - Modern Slate & Cyan Style
+    const ctx = document.getElementById('incomeChart');
+    if (ctx) {
+        const labels = {{ chart_labels | tojson }};
+        const data = {{ chart_data | tojson }};
+        
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Aylık Tahsilat (TL)',
+                    data: data,
+                    backgroundColor: 'rgba(14, 165, 233, 0.28)',
+                    borderColor: '#0EA5E9',
+                    borderWidth: 2,
+                    borderRadius: 8,
+                    hoverBackgroundColor: 'rgba(14, 165, 233, 0.55)',
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: '#0E1524',
+                        titleColor: '#F8FAFC',
+                        bodyColor: '#38BDF8',
+                        borderColor: 'rgba(255, 255, 255, 0.12)',
+                        borderWidth: 1,
+                        padding: 12,
+                        boxPadding: 6,
+                        usePointStyle: true,
+                        callbacks: {
+                            label: function(context) {
+                                return ' Gelir: ₺' + context.parsed.y.toLocaleString('tr-TR');
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#64748B',
+                            font: { family: 'Inter', size: 11 },
+                            callback: function(value) { return '₺' + value; }
+                        }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: {
+                            color: '#94A3B8',
+                            font: { family: 'Inter', size: 12 }
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

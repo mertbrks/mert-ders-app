@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+
+{% block title %}Ders Takvimi | Mert Ders Takip{% endblock %}
+
+{% block head %}
+<!-- FullCalendar 6 -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/locales/tr.global.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-5">
+    <div>
+        <h1 class="h2 mb-1 fw-bold">Ders Takvimi</h1>
+        <p class="text-secondary mb-0">Haftalık ve aylık ders programını yönet, derse tıklayarak ödev ve konu notları ekle.</p>
+    </div>
+    <div>
+        <button type="button" class="btn-saas-primary" data-bs-toggle="modal" data-bs-target="#addLessonModal">
+            <i class="bi bi-calendar-plus-fill"></i>
+            <span>Yeni Ders Planla</span>
+        </button>
+    </div>
+</div>
+
+<!-- Calendar Card -->
+<div class="saas-card p-3 p-md-4">
+    <div id="calendar"></div>
+</div>
+
+<!-- Add Lesson Modal -->
+<div class="modal fade" id="addLessonModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold"><i class="bi bi-calendar-plus text-info me-2"></i>Yeni Ders Planla</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Kapat"></button>
+      </div>
+      <form action="{{ url_for('add_lesson') }}" method="POST">
+          <div class="modal-body">
+            <div class="mb-3">
+                <label class="form-label text-secondary small fw-bold">Öğrenci Seçimi</label>
+                <select class="form-select" name="student_id" required>
+                    <option value="">Öğrenci seçiniz...</option>
+                    {% for student in students %}
+                    <option value="{{ student.id }}">{{ student.full_name }} ({{ student.grade_level }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label text-secondary small fw-bold">Tarih ve Başlangıç Saati</label>
+                <input type="datetime-local" class="form-control" name="lesson_date" id="add_lesson_date" required>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label text-secondary small fw-bold">Tekrar Sıklığı</label>
+                <select class="form-select" name="weeks">
+                    <option value="1">Yalnızca 1 Kez</option>
+                    <option value="4">4 Hafta Boyunca (Her Hafta Aynı Gün/Saat)</option>
+                    <option value="8">8 Hafta Boyunca (Her Hafta Aynı Gün/Saat)</option>
+                    <option value="12">12 Hafta Boyunca (Dönemlik Plan)</option>
+                </select>
+            </div>
+            
+            <div class="p-3 rounded" style="background: rgba(14, 165, 233, 0.08); border: 1px solid rgba(14, 165, 233, 0.2);">
+                <small class="text-info d-flex align-items-center gap-2">
+                    <i class="bi bi-shield-check fs-5"></i>
+                    <span><strong>Akıllı Çakışma Kontrolü:</strong> Belirlediğiniz saatte başka bir dersiniz varsa çakışan hafta otomatik olarak atlanır.</span>
+                </small>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-saas-secondary" data-bs-dismiss="modal">İptal</button>
+            <button type="submit" class="btn-saas-primary">Dersi Takvime Ekle</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Lesson Detail & Edit Modal (FullCalendar Triggered) -->
+<div class="modal fade" id="lessonDetailModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold" id="detailModalTitle">Ders Detayı</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Kapat"></button>
+      </div>
+      <form action="{{ url_for('update_lesson') }}" method="POST" id="updateLessonForm">
+          <input type="hidden" name="lesson_id" id="detail_lesson_id">
+          
+          <div class="modal-body">
+            <div class="mb-3">
+                <label class="form-label text-secondary small fw-bold">Ders Durumu</label>
+                <select class="form-select" name="status" id="detail_status">
+                    <option value="planlandi">Planlandı</option>
+                    <option value="yapildi">Yapıldı</option>
+                    <option value="iptal">İptal Edildi</option>
+                </select>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label text-secondary small fw-bold">İşlenen Konu</label>
+                <input type="text" class="form-control" name="topic" id="detail_topic" placeholder="Örn: Limit ve Süreklilik">
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label text-secondary small fw-bold">Verilen Ödev</label>
+                <input type="text" class="form-control" name="homework" id="detail_homework" placeholder="Örn: Test 4-5 çözülecek">
+            </div>
+            
+            <div class="mb-2">
+                <label class="form-label text-secondary small fw-bold">Ders / Öğrenci Notu</label>
+                <textarea class="form-control" name="notes" id="detail_notes" rows="3" placeholder="Öğrencinin performansı, eksikleri vb."></textarea>
+            </div>
+          </div>
+          
+          <div class="modal-footer d-flex justify-content-between">
+            <button type="button" class="btn btn-outline-danger border-0" id="btnDeleteLesson" title="Dersi Sil">
+                <i class="bi bi-trash3 me-1"></i> Dersi Sil
+            </button>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn-saas-secondary" data-bs-dismiss="modal">Kapat</button>
+                <button type="submit" class="btn-saas-primary">Kaydet</button>
+            </div>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden delete form for lesson -->
+<form id="hiddenDeleteForm" method="POST" style="display: none;"></form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const calendarEl = document.getElementById('calendar');
+    const lessonDetailModal = new bootstrap.Modal(document.getElementById('lessonDetailModal'));
+    const addLessonModal = new bootstrap.Modal(document.getElementById('addLessonModal'));
+    
+    let lastViewType = null;
+    
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: window.innerWidth < 768 ? 'listWeek' : 'timeGridWeek',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,listWeek'
+        },
+        buttonText: {
+            today: 'Bugün',
+            month: 'Ay',
+            week: 'Hafta',
+            list: 'Planlanan Dersler'
+        },
+        locale: 'tr',
+        themeSystem: 'standard',
+        dateClick: function(info) {
+            let selectedDateStr = info.dateStr;
+            // Eğer sadece gün seçildiyse (aylık görünüm vb. 'YYYY-MM-DD')
+            if (selectedDateStr.length === 10) {
+                // Varsayılan gündüz ders saati (10:00) ekle
+                selectedDateStr += 'T10:00';
+            } else if (selectedDateStr.length > 16) {
+                // Haftalık saat slotu seçildiyse 'YYYY-MM-DDTHH:MM' formatına indirge
+                selectedDateStr = selectedDateStr.substring(0, 16);
+            }
+            
+            const dateInput = document.getElementById('add_lesson_date');
+            if (dateInput) {
+                dateInput.value = selectedDateStr;
+            }
+            
+            addLessonModal.show();
+        },
+        events: function(fetchInfo, successCallback, failureCallback) {
+            fetch('/api/lessons')
+                .then(res => res.json())
+                .then(events => {
+                    const currentView = calendar ? calendar.view.type : (window.innerWidth < 768 ? 'listWeek' : 'timeGridWeek');
+                    if (currentView.startsWith('list')) {
+                        // Liste görünümünde SADECE 'planlandi' durumundaki dersleri göster
+                        const filtered = events.filter(e => e.extendedProps && e.extendedProps.status === 'planlandi');
+                        successCallback(filtered);
+                    } else {
+                        // Aylık ve haftalık görünümde tüm dersler (yapıldı, planlandı, iptal) görünsün
+                        successCallback(events);
+                    }
+                })
+                .catch(err => {
+                    console.error('Ders verisi yükleme hatası:', err);
+                    failureCallback(err);
+                });
+        },
+        datesSet: function(dateInfo) {
+            if (lastViewType !== null) {
+                const isNowList = dateInfo.view.type.startsWith('list');
+                const wasList = lastViewType.startsWith('list');
+                if (isNowList !== wasList) {
+                    calendar.refetchEvents();
+                }
+            }
+            lastViewType = dateInfo.view.type;
+        },
+        allDaySlot: false,
+        slotMinTime: '08:00:00',
+        slotMaxTime: '23:00:00',
+        height: 'auto',
+        slotDuration: '00:30:00',
+        eventClick: function(info) {
+            document.getElementById('detailModalTitle').innerText = info.event.extendedProps.studentName || info.event.title;
+            document.getElementById('detail_lesson_id').value = info.event.id;
+            document.getElementById('detail_status').value = info.event.extendedProps.status || 'planlandi';
+            document.getElementById('detail_topic').value = info.event.extendedProps.topic || '';
+            document.getElementById('detail_homework').value = info.event.extendedProps.homework || '';
+            document.getElementById('detail_notes').value = info.event.extendedProps.notes || '';
+            
+            // Delete handler setup
+            const deleteBtn = document.getElementById('btnDeleteLesson');
+            deleteBtn.onclick = function() {
+                if (confirm('Bu dersi takvimden silmek istediğinize emin misiniz?')) {
+                    const form = document.getElementById('hiddenDeleteForm');
+                    form.action = '/schedule/delete/' + info.event.id;
+                    form.submit();
+                }
+            };
+            
+            lessonDetailModal.show();
+        }
+    });
+    
+    calendar.render();
+});
+</script>
+{% endblock %}

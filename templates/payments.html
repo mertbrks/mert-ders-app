@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block title %}Ödemeler ve Finans | Mert Ders Takip{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-5">
+    <div>
+        <h1 class="h2 mb-1 fw-bold">Finans & Tahsilat</h1>
+        <p class="text-secondary mb-0">Tamamlanan derslerin ödeme takibi, bekleyen alacaklar ve tahsilat geçmişi.</p>
+    </div>
+</div>
+
+<!-- KPI Mini Stats -->
+<div class="row g-4 mb-5">
+    <div class="col-md-6">
+        <div class="stat-widget">
+            <div class="stat-widget-glow" style="background: radial-gradient(circle, var(--accent-amber-glow) 0%, transparent 70%);"></div>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="stat-label">Bekleyen Toplam Alacak</span>
+                <span class="badge-pill-amber"><i class="bi bi-hourglass-split me-1"></i>Bekliyor</span>
+            </div>
+            <div class="stat-value text-white">₺{{ "{:,.0f}".format(total_unpaid) if total_unpaid else '0' }}</div>
+            <small class="text-secondary mt-1 d-block">{{ unpaid_lessons|length }} ders tahsilat bekliyor.</small>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="stat-widget">
+            <div class="stat-widget-glow" style="background: radial-gradient(circle, var(--accent-emerald-glow) 0%, transparent 70%);"></div>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="stat-label">Son Tahsilatlar Toplamı</span>
+                <span class="badge-pill-emerald"><i class="bi bi-check-circle me-1"></i>Tahsil Edildi</span>
+            </div>
+            <div class="stat-value text-white">₺{{ "{:,.0f}".format(total_collected) if total_collected else '0' }}</div>
+            <small class="text-secondary mt-1 d-block">Sistemde kayıtlı son tahsilatların hacmi.</small>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Sol Kolon: Bekleyen Tahsilatlar Tablosu -->
+    <div class="col-xl-8 col-lg-7">
+        <div class="saas-card h-100 d-flex flex-column">
+            <div class="saas-card-header d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-hourglass-split text-warning"></i>
+                    <h5 class="mb-0 fw-bold">Tahsil Edilmeyi Bekleyen Dersler</h5>
+                </div>
+                <span class="badge-pill-amber">{{ unpaid_lessons|length }} Ders</span>
+            </div>
+            
+            <div class="saas-card-body p-0 flex-grow-1">
+                {% if unpaid_lessons %}
+                <div class="table-responsive">
+                    <table class="table table-borderless align-middle mb-0">
+                        <thead style="background: rgba(255, 255, 255, 0.02); border-bottom: 1px solid var(--border-subtle);">
+                            <tr>
+                                <th class="text-secondary small fw-bold text-uppercase py-3 ps-4">Ders Tarihi</th>
+                                <th class="text-secondary small fw-bold text-uppercase py-3">Öğrenci</th>
+                                <th class="text-secondary small fw-bold text-uppercase py-3">Tutar</th>
+                                <th class="text-secondary small fw-bold text-uppercase py-3 text-end pe-4">Aksiyon</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for lesson in unpaid_lessons %}
+                            <tr class="border-bottom" style="border-color: var(--border-subtle) !important;">
+                                <td class="ps-4">
+                                    <span class="text-white small fw-medium">
+                                        <i class="bi bi-calendar3 me-2 text-secondary"></i>
+                                        {{ lesson.lesson_date.replace('T', ' ') }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="fw-bold text-white">{{ lesson.full_name }}</span>
+                                    {% if lesson.topic %}
+                                    <small class="text-secondary d-block" style="font-size: 0.75rem;">{{ lesson.topic }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge-pill-cyan">₺{{ lesson.hourly_rate }}</span>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <form action="{{ url_for('pay_lesson', lesson_id=lesson.lesson_id) }}" method="POST" class="d-inline">
+                                        <button type="submit" class="btn-saas-emerald py-1 px-3" title="Tahsil Et">
+                                            <i class="bi bi-check2-circle"></i>
+                                            <span>Tahsil Et</span>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5 px-4">
+                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25);">
+                        <i class="bi bi-check-lg fs-2 text-success"></i>
+                    </div>
+                    <h5 class="fw-bold text-white mb-1">Mükemmel! Bekleyen Borç Yok</h5>
+                    <p class="text-secondary small mb-0">İşlenen tüm derslerin ödemeleri eksiksiz tahsil edildi.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sağ Kolon: Son Tahsilatlar & Geri Alma -->
+    <div class="col-xl-4 col-lg-5">
+        <div class="saas-card h-100 d-flex flex-column">
+            <div class="saas-card-header d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-clock-history text-info"></i>
+                    <h5 class="mb-0 fw-bold">Son Tahsilatlar</h5>
+                </div>
+                <span class="text-secondary small">Son 20</span>
+            </div>
+            
+            <div class="saas-card-body p-0 flex-grow-1">
+                {% if paid_lessons %}
+                <div class="list-group list-group-flush border-0">
+                    {% for p in paid_lessons %}
+                    <div class="list-group-item bg-transparent p-3 border-bottom d-flex justify-content-between align-items-center" style="border-color: var(--border-subtle) !important;">
+                        <div>
+                            <span class="text-white fw-bold d-block small mb-1">{{ p.full_name }}</span>
+                            <small class="text-secondary" style="font-size: 0.72rem;">
+                                <i class="bi bi-check-all text-success me-1"></i>{{ p.payment_date.replace('T', ' ')[:16] if p.payment_date else '' }}
+                            </small>
+                        </div>
+                        
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge-pill-emerald">₺{{ p.amount }}</span>
+                            <form action="{{ url_for('undo_payment', payment_id=p.payment_id) }}" method="POST" class="d-inline" onsubmit="return confirm('Bu tahsilatı geri almak (ödenmemiş yapmak) istediğinize emin misiniz?');">
+                                <button type="submit" class="btn btn-sm text-secondary hover-scale border-0 p-1" title="Tahsilatı Geri Al" aria-label="Geri Al">
+                                    <i class="bi bi-arrow-counterclockwise fs-5 text-warning opacity-75"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5 px-4">
+                    <i class="bi bi-inbox fs-2 text-secondary d-block mb-2 opacity-50"></i>
+                    <p class="text-secondary small mb-0">Henüz kaydedilmiş tahsilat bulunmuyor.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

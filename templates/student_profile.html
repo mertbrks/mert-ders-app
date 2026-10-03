@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ student.full_name }} — Öğrenci Profili{% endblock %}
+
+{% block content %}
+<!-- Top Action Bar -->
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-5">
+    <div class="d-flex align-items-center gap-3">
+        <a href="{{ url_for('students') }}" class="btn-saas-secondary py-2 px-3" aria-label="Geri">
+            <i class="bi bi-arrow-left"></i>
+            <span>Öğrencilere Dön</span>
+        </a>
+        <h1 class="h3 mb-0 fw-bold">{{ student.full_name }}</h1>
+    </div>
+    
+    <div class="d-flex align-items-center gap-2">
+        <a href="{{ wa_link }}" target="_blank" rel="noopener noreferrer" class="btn-saas-emerald">
+            <i class="bi bi-whatsapp"></i>
+            <span>Veliye WhatsApp Mesajı</span>
+        </a>
+        <button type="button" class="btn btn-sm btn-outline-danger border-0 p-2" data-bs-toggle="modal" data-bs-target="#deleteStudentModal" title="Öğrenciyi Sil">
+            <i class="bi bi-trash3 fs-5"></i>
+        </button>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Sol Kolon: Öğrenci Detay Kartı -->
+    <div class="col-xl-4 col-lg-5">
+        <div class="saas-card p-4 h-100">
+            <div class="text-center pb-4 border-bottom" style="border-color: var(--border-subtle) !important;">
+                <div class="rounded-circle d-inline-flex align-items-center justify-content-center fw-bold fs-1 text-white mb-3 shadow" style="width: 84px; height: 84px; background: linear-gradient(135deg, #0EA5E9 0%, #06B6D4 100%); border: 2px solid rgba(255, 255, 255, 0.2);">
+                    {{ student.full_name[0] }}
+                </div>
+                <h3 class="h4 fw-bold text-white mb-1">{{ student.full_name }}</h3>
+                <span class="badge-pill-cyan">{{ student.grade_level }}</span>
+            </div>
+            
+            <!-- Bilgi Satırları -->
+            <div class="py-4 border-bottom" style="border-color: var(--border-subtle) !important;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-secondary small d-flex align-items-center">
+                        <i class="bi bi-telephone me-2 text-muted"></i> Veli İletişim
+                    </span>
+                    <span class="text-white fw-medium small">{{ student.parent_contact or 'Yok' }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-secondary small d-flex align-items-center">
+                        <i class="bi bi-cash-stack me-2 text-muted"></i> Saatlik Ücret
+                    </span>
+                    <span class="text-success fw-bold">₺{{ student.hourly_rate }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-secondary small d-flex align-items-center">
+                        <i class="bi bi-clock-history me-2 text-muted"></i> Standart Süre
+                    </span>
+                    <span class="text-white fw-medium small">{{ student.default_duration or 60 }} dk</span>
+                </div>
+            </div>
+            
+            <!-- Bakiye Durumu Widget -->
+            <div class="my-4 p-3 rounded text-center {% if pending_balance > 0 %}border border-danger border-opacity-25 bg-danger bg-opacity-10{% else %}border border-success border-opacity-25 bg-success bg-opacity-10{% endif %}">
+                <span class="stat-label d-block mb-1 {% if pending_balance > 0 %}text-danger{% else %}text-success{% endif %}">Bekleyen Bakiye</span>
+                <div class="h3 fw-bold mb-0 {% if pending_balance > 0 %}text-danger{% else %}text-success{% endif %}">
+                    {% if pending_balance > 0 %}₺{{ "{:,.0f}".format(pending_balance) }}{% else %}Borç Yok ✓{% endif %}
+                </div>
+            </div>
+            
+            <!-- Öğrenci Notu -->
+            {% if student.notes %}
+            <div class="p-3 rounded mb-4" style="background: rgba(255, 255, 255, 0.02); border-left: 3px solid var(--accent-cyan);">
+                <small class="text-secondary fw-bold text-uppercase d-block mb-1" style="font-size: 0.7rem;">Özel Not</small>
+                <p class="text-light small mb-0">{{ student.notes }}</p>
+            </div>
+            {% endif %}
+            
+            <button type="button" class="btn-saas-secondary w-100" data-bs-toggle="modal" data-bs-target="#editStudentModal">
+                <i class="bi bi-pencil-square"></i>
+                <span>Bilgileri Düzenle</span>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Sağ Kolon: Ders Geçmişi & Karne -->
+    <div class="col-xl-8 col-lg-7">
+        <div class="saas-card h-100 d-flex flex-column">
+            <div class="saas-card-header d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-journal-text text-info"></i>
+                    <h5 class="mb-0 fw-bold">Ders Geçmişi (Karne)</h5>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge-pill-cyan">Toplam: {{ stats.total_lessons or 0 }}</span>
+                    <span class="badge-pill-emerald">Tamamlanan: {{ stats.done_lessons or 0 }}</span>
+                </div>
+            </div>
+            
+            <div class="saas-card-body p-0 flex-grow-1">
+                {% if lessons %}
+                <div class="list-group list-group-flush border-0">
+                    {% for lesson in lessons %}
+                    <div class="list-group-item bg-transparent p-4 border-bottom" style="border-color: var(--border-subtle) !important;">
+                        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fw-bold text-white fs-6">
+                                    <i class="bi bi-calendar-event me-2 text-secondary"></i>
+                                    {{ lesson.lesson_date.replace('T', ' ') }}
+                                </span>
+                                <small class="text-secondary">({{ lesson.duration_minutes or 60 }} dk)</small>
+                            </div>
+                            
+                            <span class="{% if lesson.status == 'yapildi' %}badge-pill-emerald{% elif lesson.status == 'iptal' %}badge-pill-rose{% else %}badge-pill-cyan{% endif %}">
+                                {% if lesson.status == 'yapildi' %}Yapıldı{% elif lesson.status == 'iptal' %}İptal{% else %}Planlandı{% endif %}
+                            </span>
+                        </div>
+                        
+                        <div class="ps-sm-4 ms-sm-2 mt-2">
+                            {% if lesson.topic %}
+                            <div class="d-flex align-items-start gap-2 mb-2">
+                                <span class="badge bg-secondary bg-opacity-25 text-info px-2 py-1 small">Konu</span>
+                                <span class="text-light small">{{ lesson.topic }}</span>
+                            </div>
+                            {% endif %}
+                            
+                            {% if lesson.homework %}
+                            <div class="d-flex align-items-start gap-2 mb-2">
+                                <span class="badge bg-secondary bg-opacity-25 text-warning px-2 py-1 small">Ödev</span>
+                                <span class="text-light small">{{ lesson.homework }}</span>
+                            </div>
+                            {% endif %}
+                            
+                            {% if lesson.notes %}
+                            <div class="p-3 rounded mt-2" style="background: rgba(255, 255, 255, 0.02); border-left: 2px solid var(--text-muted); font-style: italic;">
+                                <small class="text-secondary d-block"><i class="bi bi-chat-left-quote me-1"></i> {{ lesson.notes }}</small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5 px-4">
+                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle);">
+                        <i class="bi bi-inbox fs-3 text-secondary"></i>
+                    </div>
+                    <h6 class="fw-bold text-white mb-1">Ders Kaydı Bulunmuyor</h6>
+                    <p class="text-secondary small mb-0">Bu öğrenci için henüz takvimde ders oluşturulmamış.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Student Modal -->
+<div class="modal fade" id="editStudentModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">Öğrenci Bilgilerini Güncelle</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Kapat"></button>
+      </div>
+      <form action="{{ url_for('edit_student', id=student.id) }}" method="POST">
+          <div class="modal-body">
+            <div class="mb-3">
+                <label class="form-label text-secondary small fw-bold">Ad Soyad</label>
+                <input type="text" class="form-control" name="full_name" value="{{ student.full_name }}" required>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label text-secondary small fw-bold">Sınıf / Seviye</label>
+                    <input type="text" class="form-control" name="grade_level" value="{{ student.grade_level }}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label text-secondary small fw-bold">Veli İletişim (Tel)</label>
+                    <input type="text" class="form-control" name="parent_contact" value="{{ student.parent_contact or '' }}">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label text-secondary small fw-bold">Ders Ücreti (₺)</label>
+                    <input type="number" step="0.01" class="form-control" name="hourly_rate" value="{{ student.hourly_rate }}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label text-secondary small fw-bold">Standart Süre (Dk)</label>
+                    <input type="number" class="form-control" name="default_duration" value="{{ student.default_duration or 60 }}" required>
+                </div>
+            </div>
+            <div class="mb-2">
+                <label class="form-label text-secondary small fw-bold">Özel Notlar</label>
+                <textarea class="form-control" name="notes" rows="2">{{ student.notes or '' }}</textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-saas-secondary" data-bs-dismiss="modal">İptal</button>
+            <button type="submit" class="btn-saas-primary">Değişiklikleri Kaydet</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteStudentModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-bottom-0 pb-0">
+        <h5 class="modal-title fw-bold text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>Öğrenciyi Sil</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Kapat"></button>
+      </div>
+      <div class="modal-body py-4">
+        <p class="text-white mb-2"><strong>"{{ student.full_name }}"</strong> isimli öğrenciyi silmek üzeresiniz.</p>
+        <p class="text-secondary small mb-0">Bu işlem öğrenciye ait tüm ders geçmişini ve tahsilat kayıtlarını kalıcı olarak silecektir. Devam etmek istediğinize emin misiniz?</p>
+      </div>
+      <div class="modal-footer border-top-0 pt-0">
+        <button type="button" class="btn-saas-secondary" data-bs-dismiss="modal">Vazgeç</button>
+        <form action="{{ url_for('delete_student', id=student.id) }}" method="POST">
+            <button type="submit" class="btn-saas-rose">Kalıcı Olarak Sil</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
