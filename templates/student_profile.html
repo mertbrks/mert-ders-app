@@ -104,7 +104,7 @@
                             <div class="d-flex align-items-center gap-2">
                                 <span class="fw-bold text-white fs-6">
                                     <i class="bi bi-calendar-event me-2 text-secondary"></i>
-                                    {{ lesson.lesson_date.replace('T', ' ') }}
+                                    {{ (lesson.lesson_date|string).replace('T', ' ') }}
                                 </span>
                                 <small class="text-secondary">({{ lesson.duration_minutes or 60 }} dk)</small>
                             </div>

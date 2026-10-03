@@ -125,7 +125,7 @@
                         <div>
                             <span class="text-white fw-bold d-block small mb-1">{{ p.full_name }}</span>
                             <small class="text-secondary" style="font-size: 0.72rem;">
-                                <i class="bi bi-check-all text-success me-1"></i>{{ p.payment_date.replace('T', ' ')[:16] if p.payment_date else '' }}
+                                <i class="bi bi-check-all text-success me-1"></i>{{ (p.payment_date|string).replace('T', ' ')[:16] if p.payment_date else '' }}
                             </small>
                         </div>
                         
