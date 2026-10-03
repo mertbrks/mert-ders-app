@@ -91,7 +91,7 @@
                                 <div>
                                     <h6 class="mb-1 fw-bold text-white fs-6">{{ lesson.full_name }}</h6>
                                     <div class="d-flex align-items-center gap-2 text-secondary small">
-                                        <span><i class="bi bi-clock me-1"></i>{{ lesson.lesson_date.split('T')[1] if 'T' in lesson.lesson_date else lesson.lesson_date }}</span>
+                                        <span><i class="bi bi-clock me-1"></i>{{ (lesson.lesson_date|string).split('T')[1] if 'T' in (lesson.lesson_date|string) else (lesson.lesson_date|string) }}</span>
                                         <span>•</span>
                                         <span>{{ lesson.duration_minutes or 60 }} dk</span>
                                         {% if lesson.topic %}
@@ -187,7 +187,7 @@
                         <div class="flex-grow-1 pe-2">
                             <p class="mb-1 text-white small">{{ note.content }}</p>
                             <small class="text-secondary" style="font-size: 0.72rem;">
-                                <i class="bi bi-clock me-1"></i>{{ note.created_at[:16] if note.created_at else '' }}
+                                <i class="bi bi-clock me-1"></i>{{ (note.created_at|string)[:16] if note.created_at else '' }}
                             </small>
                         </div>
                         <form action="{{ url_for('delete_note', note_id=note.id) }}" method="POST">
