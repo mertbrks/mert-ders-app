@@ -6,141 +6,213 @@
 <!-- FullCalendar 6 -->
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/locales/tr.global.min.js"></script>
+<style>
+/* FullCalendar Tailwind Overrides (Ek stil ayarlamaları) */
+.fc .fc-toolbar-title {
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    font-weight: 800 !important;
+    color: #f3f4f6 !important;
+    font-size: 1.25rem !important;
+}
+.fc-theme-standard td, .fc-theme-standard th, .fc-theme-standard .fc-scrollgrid {
+    border-color: rgba(255, 255, 255, 0.05) !important;
+}
+.fc .fc-col-header-cell-cushion {
+    color: #9ca3af !important;
+    font-weight: 600 !important;
+}
+.fc-timegrid-slot-label-cushion {
+    color: #6b7280 !important;
+}
+.fc .fc-button-primary {
+    background-color: #1f2937 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #d1d5db !important;
+    text-transform: capitalize !important;
+    box-shadow: none !important;
+    border-radius: 0.5rem !important;
+    padding: 0.5rem 1rem !important;
+}
+.fc .fc-button-primary:hover {
+    background-color: #374151 !important;
+    color: #fff !important;
+}
+.fc .fc-button-primary:not(:disabled).fc-button-active {
+    background-color: #0ea5e9 !important; /* brand-500 */
+    border-color: transparent !important;
+    color: #fff !important;
+}
+</style>
 {% endblock %}
 
 {% block content %}
 <!-- Page Header -->
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-5">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
     <div>
-        <h1 class="h2 mb-1 fw-bold">Ders Takvimi</h1>
-        <p class="text-secondary mb-0">Haftalık ve aylık ders programını yönet, derse tıklayarak ödev ve konu notları ekle.</p>
+        <h1 class="text-3xl font-display font-extrabold text-white mb-2">Ders Takvimi</h1>
+        <p class="text-gray-400 text-sm">Haftalık ve aylık ders programını yönet, derse tıklayarak ödev ve konu notları ekle.</p>
     </div>
     <div>
-        <button type="button" class="btn-saas-primary" data-bs-toggle="modal" data-bs-target="#addLessonModal">
+        {% if is_admin %}
+        <button type="button" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 hover:from-brand-400 hover:to-brand-500 text-white font-medium text-sm transition-all shadow-[0_0_20px_-5px_rgba(14,165,233,0.4)] hover:shadow-[0_0_25px_-5px_rgba(14,165,233,0.6)] hover:-translate-y-0.5" onclick="toggleModal('addLessonModal')">
             <i class="bi bi-calendar-plus-fill"></i>
             <span>Yeni Ders Planla</span>
         </button>
+        {% endif %}
     </div>
 </div>
 
 <!-- Calendar Card -->
-<div class="saas-card p-3 p-md-4">
-    <div id="calendar"></div>
+<div class="bg-surface-elevated border border-white/5 rounded-2xl shadow-glass p-4 md:p-6 mb-10">
+    <div id="calendar" class="min-h-[600px]"></div>
 </div>
 
 <!-- Add Lesson Modal -->
-<div class="modal fade" id="addLessonModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title fw-bold"><i class="bi bi-calendar-plus text-info me-2"></i>Yeni Ders Planla</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Kapat"></button>
-      </div>
-      <form action="{{ url_for('add_lesson') }}" method="POST">
-          <div class="modal-body">
-            <div class="mb-3">
-                <label class="form-label text-secondary small fw-bold">Öğrenci Seçimi</label>
-                <select class="form-select" name="student_id" required>
-                    <option value="">Öğrenci seçiniz...</option>
-                    {% for student in students %}
-                    <option value="{{ student.id }}">{{ student.full_name }} ({{ student.grade_level }})</option>
-                    {% endfor %}
-                </select>
+<div id="addLessonModal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-surface-base/80 backdrop-blur-sm transition-opacity" onclick="toggleModal('addLessonModal')"></div>
+    
+    <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div class="relative transform overflow-hidden rounded-2xl bg-surface-elevated text-left shadow-2xl transition-all border border-white/10 sm:my-8 sm:w-full sm:max-w-lg">
+                
+                <div class="px-6 py-4 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="bi bi-calendar-plus text-brand-400"></i>
+                        Yeni Ders Planla
+                    </h3>
+                    <button type="button" class="text-gray-400 hover:text-white transition-colors" onclick="toggleModal('addLessonModal')">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                
+                <form action="{{ url_for('add_lesson') }}" method="POST">
+                    <div class="px-6 py-5 space-y-5">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-1.5">Öğrenci Seçimi</label>
+                            <select name="student_id" class="w-full bg-surface-base border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all shadow-inner" required>
+                                <option value="">Öğrenci seçiniz...</option>
+                                {% for student in students %}
+                                <option value="{{ student.id }}">{{ student.full_name }} ({{ student.grade_level }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-1.5">Tarih ve Başlangıç Saati</label>
+                            <!-- dark mode form inputs for datetime-local can look odd, but this styling helps -->
+                            <input type="datetime-local" name="lesson_date" id="add_lesson_date" class="w-full bg-surface-base border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all shadow-inner [color-scheme:dark]" required>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-1.5">Tekrar Sıklığı</label>
+                            <select name="weeks" class="w-full bg-surface-base border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all shadow-inner">
+                                <option value="1">Yalnızca 1 Kez</option>
+                                <option value="4">4 Hafta Boyunca (Her Hafta Aynı Gün/Saat)</option>
+                                <option value="8">8 Hafta Boyunca (Her Hafta Aynı Gün/Saat)</option>
+                                <option value="12">12 Hafta Boyunca (Dönemlik Plan)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="p-3.5 rounded-xl bg-brand-500/10 border border-brand-500/20 text-brand-400 text-xs flex gap-3 items-start">
+                            <i class="bi bi-shield-check text-base shrink-0"></i>
+                            <span class="leading-relaxed"><strong>Akıllı Çakışma Kontrolü:</strong> Belirlediğiniz saatte başka bir dersiniz varsa çakışan hafta otomatik olarak atlanır.</span>
+                        </div>
+                    </div>
+                    
+                    <div class="px-6 py-4 border-t border-white/10 bg-white/[0.02] flex justify-end gap-3">
+                        <button type="button" class="px-4 py-2 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5 transition-colors" onclick="toggleModal('addLessonModal')">İptal</button>
+                        <button type="submit" class="px-5 py-2 rounded-xl bg-brand-500 hover:bg-brand-400 text-white text-sm font-medium transition-colors shadow-lg shadow-brand-500/20">Dersi Takvime Ekle</button>
+                    </div>
+                </form>
             </div>
-            
-            <div class="mb-3">
-                <label class="form-label text-secondary small fw-bold">Tarih ve Başlangıç Saati</label>
-                <input type="datetime-local" class="form-control" name="lesson_date" id="add_lesson_date" required>
-            </div>
-            
-            <div class="mb-3">
-                <label class="form-label text-secondary small fw-bold">Tekrar Sıklığı</label>
-                <select class="form-select" name="weeks">
-                    <option value="1">Yalnızca 1 Kez</option>
-                    <option value="4">4 Hafta Boyunca (Her Hafta Aynı Gün/Saat)</option>
-                    <option value="8">8 Hafta Boyunca (Her Hafta Aynı Gün/Saat)</option>
-                    <option value="12">12 Hafta Boyunca (Dönemlik Plan)</option>
-                </select>
-            </div>
-            
-            <div class="p-3 rounded" style="background: rgba(14, 165, 233, 0.08); border: 1px solid rgba(14, 165, 233, 0.2);">
-                <small class="text-info d-flex align-items-center gap-2">
-                    <i class="bi bi-shield-check fs-5"></i>
-                    <span><strong>Akıllı Çakışma Kontrolü:</strong> Belirlediğiniz saatte başka bir dersiniz varsa çakışan hafta otomatik olarak atlanır.</span>
-                </small>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn-saas-secondary" data-bs-dismiss="modal">İptal</button>
-            <button type="submit" class="btn-saas-primary">Dersi Takvime Ekle</button>
-          </div>
-      </form>
+        </div>
     </div>
-  </div>
 </div>
 
-<!-- Lesson Detail & Edit Modal (FullCalendar Triggered) -->
-<div class="modal fade" id="lessonDetailModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title fw-bold" id="detailModalTitle">Ders Detayı</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Kapat"></button>
-      </div>
-      <form action="{{ url_for('update_lesson') }}" method="POST" id="updateLessonForm">
-          <input type="hidden" name="lesson_id" id="detail_lesson_id">
-          
-          <div class="modal-body">
-            <div class="mb-3">
-                <label class="form-label text-secondary small fw-bold">Ders Durumu</label>
-                <select class="form-select" name="status" id="detail_status">
-                    <option value="planlandi">Planlandı</option>
-                    <option value="yapildi">Yapıldı</option>
-                    <option value="iptal">İptal Edildi</option>
-                </select>
+<!-- Lesson Detail & Edit Modal -->
+<div id="lessonDetailModal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-surface-base/80 backdrop-blur-sm transition-opacity" onclick="toggleModal('lessonDetailModal')"></div>
+    
+    <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div class="relative transform overflow-hidden rounded-2xl bg-surface-elevated text-left shadow-2xl transition-all border border-white/10 sm:my-8 sm:w-full sm:max-w-lg">
+                
+                <div class="px-6 py-4 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2" id="detailModalTitle">
+                        Ders Detayı
+                    </h3>
+                    <button type="button" class="text-gray-400 hover:text-white transition-colors" onclick="toggleModal('lessonDetailModal')">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                
+                <form action="{{ url_for('update_lesson') }}" method="POST" id="updateLessonForm">
+                    <input type="hidden" name="lesson_id" id="detail_lesson_id">
+                    
+                    <div class="px-6 py-5 space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-1.5">Ders Durumu</label>
+                            <select name="status" id="detail_status" class="w-full bg-surface-base border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all shadow-inner">
+                                <option value="planlandi">Planlandı</option>
+                                <option value="yapildi">Yapıldı</option>
+                                <option value="iptal">İptal Edildi</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-1.5">İşlenen Konu</label>
+                            <input type="text" name="topic" id="detail_topic" placeholder="Örn: Limit ve Süreklilik" class="w-full bg-surface-base border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all shadow-inner">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-1.5">Verilen Ödev</label>
+                            <input type="text" name="homework" id="detail_homework" placeholder="Örn: Test 4-5 çözülecek" class="w-full bg-surface-base border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all shadow-inner">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-1.5">Ders / Öğrenci Notu</label>
+                            <textarea name="notes" id="detail_notes" rows="3" placeholder="Öğrencinin performansı, eksikleri vb." class="w-full bg-surface-base border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all shadow-inner"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="px-6 py-4 border-t border-white/10 bg-white/[0.02] flex justify-between items-center gap-3">
+                        {% if is_admin %}
+                        <button type="button" id="btnDeleteLesson" class="px-3 py-2 rounded-xl text-sm font-medium text-rose-400 hover:text-white hover:bg-rose-500/20 transition-colors flex items-center gap-1.5">
+                            <i class="bi bi-trash3"></i> Dersi Sil
+                        </button>
+                        {% else %}
+                        <div></div>
+                        {% endif %}
+                        <div class="flex gap-2">
+                            <button type="button" class="px-4 py-2 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5 transition-colors" onclick="toggleModal('lessonDetailModal')">Kapat</button>
+                            {% if is_admin %}
+                            <button type="submit" class="px-5 py-2 rounded-xl bg-brand-500 hover:bg-brand-400 text-white text-sm font-medium transition-colors shadow-lg shadow-brand-500/20">Kaydet</button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </form>
             </div>
-            
-            <div class="mb-3">
-                <label class="form-label text-secondary small fw-bold">İşlenen Konu</label>
-                <input type="text" class="form-control" name="topic" id="detail_topic" placeholder="Örn: Limit ve Süreklilik">
-            </div>
-            
-            <div class="mb-3">
-                <label class="form-label text-secondary small fw-bold">Verilen Ödev</label>
-                <input type="text" class="form-control" name="homework" id="detail_homework" placeholder="Örn: Test 4-5 çözülecek">
-            </div>
-            
-            <div class="mb-2">
-                <label class="form-label text-secondary small fw-bold">Ders / Öğrenci Notu</label>
-                <textarea class="form-control" name="notes" id="detail_notes" rows="3" placeholder="Öğrencinin performansı, eksikleri vb."></textarea>
-            </div>
-          </div>
-          
-          <div class="modal-footer d-flex justify-content-between">
-            <button type="button" class="btn btn-outline-danger border-0" id="btnDeleteLesson" title="Dersi Sil">
-                <i class="bi bi-trash3 me-1"></i> Dersi Sil
-            </button>
-            <div class="d-flex gap-2">
-                <button type="button" class="btn-saas-secondary" data-bs-dismiss="modal">Kapat</button>
-                <button type="submit" class="btn-saas-primary">Kaydet</button>
-            </div>
-          </div>
-      </form>
+        </div>
     </div>
-  </div>
 </div>
 
 <!-- Hidden delete form for lesson -->
-<form id="hiddenDeleteForm" method="POST" style="display: none;"></form>
+<form id="hiddenDeleteForm" method="POST" class="hidden"></form>
 {% endblock %}
 
 {% block scripts %}
 <script>
+function toggleModal(modalID) {
+    const modal = document.getElementById(modalID);
+    if (modal.classList.contains('hidden')) {
+        modal.classList.remove('hidden');
+    } else {
+        modal.classList.add('hidden');
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const calendarEl = document.getElementById('calendar');
-    const lessonDetailModal = new bootstrap.Modal(document.getElementById('lessonDetailModal'));
-    const addLessonModal = new bootstrap.Modal(document.getElementById('addLessonModal'));
-    
     let lastViewType = null;
     
     const calendar = new FullCalendar.Calendar(calendarEl, {
@@ -160,12 +232,9 @@ document.addEventListener('DOMContentLoaded', function() {
         themeSystem: 'standard',
         dateClick: function(info) {
             let selectedDateStr = info.dateStr;
-            // Eğer sadece gün seçildiyse (aylık görünüm vb. 'YYYY-MM-DD')
             if (selectedDateStr.length === 10) {
-                // Varsayılan gündüz ders saati (10:00) ekle
                 selectedDateStr += 'T10:00';
             } else if (selectedDateStr.length > 16) {
-                // Haftalık saat slotu seçildiyse 'YYYY-MM-DDTHH:MM' formatına indirge
                 selectedDateStr = selectedDateStr.substring(0, 16);
             }
             
@@ -174,7 +243,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 dateInput.value = selectedDateStr;
             }
             
-            addLessonModal.show();
+            toggleModal('addLessonModal');
         },
         events: function(fetchInfo, successCallback, failureCallback) {
             fetch('/api/lessons')
@@ -182,11 +251,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(events => {
                     const currentView = calendar ? calendar.view.type : (window.innerWidth < 768 ? 'listWeek' : 'timeGridWeek');
                     if (currentView.startsWith('list')) {
-                        // Liste görünümünde SADECE 'planlandi' durumundaki dersleri göster
                         const filtered = events.filter(e => e.extendedProps && e.extendedProps.status === 'planlandi');
                         successCallback(filtered);
                     } else {
-                        // Aylık ve haftalık görünümde tüm dersler (yapıldı, planlandı, iptal) görünsün
                         successCallback(events);
                     }
                 })
@@ -218,7 +285,6 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('detail_homework').value = info.event.extendedProps.homework || '';
             document.getElementById('detail_notes').value = info.event.extendedProps.notes || '';
             
-            // Delete handler setup
             const deleteBtn = document.getElementById('btnDeleteLesson');
             deleteBtn.onclick = function() {
                 if (confirm('Bu dersi takvimden silmek istediğinize emin misiniz?')) {
@@ -228,7 +294,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             };
             
-            lessonDetailModal.show();
+            toggleModal('lessonDetailModal');
         }
     });
     

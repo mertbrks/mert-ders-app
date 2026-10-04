@@ -2,7 +2,7 @@ import os
 import calendar
 import urllib.parse
 from datetime import datetime, timedelta
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
 from database import init_db, get_db_connection
 
 app = Flask(__name__)
@@ -10,6 +10,42 @@ app.secret_key = os.environ.get('SECRET_KEY', 'mert_ders_takip_secret_2026_key')
 
 # Tabloları başlat
 init_db()
+
+@app.before_request
+def require_login():
+    # Login sayfası ve static dosyalar hariç diğer tüm sayfalarda oturum kontrolü yap
+    allowed_routes = ['login', 'static']
+    if request.endpoint and request.endpoint not in allowed_routes:
+        if not session.get('user_role'):
+            return redirect(url_for('login'))
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        action = request.form.get('action')
+        if action == 'visitor':
+            session['user_role'] = 'visitor'
+            return redirect(url_for('index'))
+        else:
+            password = request.form.get('password')
+            # Şifreyi basit bir örnek olarak "mert2026" yapalım, veya os.environ'dan çekelim
+            correct_password = os.environ.get('ADMIN_PASSWORD', 'mert2026')
+            if password == correct_password:
+                session['user_role'] = 'admin'
+                return redirect(url_for('index'))
+            else:
+                flash('Hatalı şifre girdiniz.', 'danger')
+                
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
+@app.context_processor
+def inject_user_role():
+    return dict(is_admin=(session.get('user_role') == 'admin'))
 
 @app.route('/')
 def index():
@@ -58,6 +94,10 @@ def index():
         income = income_row['m_income'] if income_row and income_row['m_income'] else 0
         chart_labels.append(f"{month_names[m-1]} {y}")
         chart_data.append(float(income))
+        
+    # Ziyaretçi ise grafikte veriler gizlensin
+    if session.get('user_role') != 'admin':
+        chart_data = [0] * len(chart_data)
         
     # Hızlı notlar
     quick_notes = conn.execute('SELECT * FROM quick_notes ORDER BY created_at DESC').fetchall()

@@ -4,89 +4,105 @@
 
 {% block content %}
 <!-- Page Header -->
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-5">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
     <div>
-        <h1 class="h2 mb-1 fw-bold">Finans & Tahsilat</h1>
-        <p class="text-secondary mb-0">Tamamlanan derslerin ödeme takibi, bekleyen alacaklar ve tahsilat geçmişi.</p>
+        <h1 class="text-3xl font-display font-extrabold text-white mb-2">Finans & Tahsilat</h1>
+        <p class="text-gray-400 text-sm">Tamamlanan derslerin ödeme takibi, bekleyen alacaklar ve tahsilat geçmişi.</p>
     </div>
 </div>
 
 <!-- KPI Mini Stats -->
-<div class="row g-4 mb-5">
-    <div class="col-md-6">
-        <div class="stat-widget">
-            <div class="stat-widget-glow" style="background: radial-gradient(circle, var(--accent-amber-glow) 0%, transparent 70%);"></div>
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="stat-label">Bekleyen Toplam Alacak</span>
-                <span class="badge-pill-amber"><i class="bi bi-hourglass-split me-1"></i>Bekliyor</span>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+    <!-- Stat 1 -->
+    <div class="relative overflow-hidden p-6 rounded-2xl bg-surface-elevated border border-white/5 shadow-glass hover:shadow-glass-hover hover:-translate-y-1 transition-all duration-300 group">
+        <div class="absolute -top-10 -right-10 w-40 h-40 bg-amber-500/20 blur-3xl rounded-full group-hover:bg-amber-500/30 transition-all"></div>
+        <div class="flex justify-between items-center mb-4 relative z-10">
+            <span class="text-xs font-bold tracking-wider text-gray-400 uppercase">Bekleyen Toplam Alacak</span>
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold">
+                <i class="bi bi-hourglass-split"></i> Bekliyor
+            </span>
+        </div>
+        <div class="relative z-10">
+            <div class="flex items-baseline gap-2">
+                <span class="font-display text-4xl font-extrabold text-white">{% if is_admin %}₺{{ "{:,.0f}".format(total_unpaid) if total_unpaid else '0' }}{% else %}₺***{% endif %}</span>
             </div>
-            <div class="stat-value text-white">₺{{ "{:,.0f}".format(total_unpaid) if total_unpaid else '0' }}</div>
-            <small class="text-secondary mt-1 d-block">{{ unpaid_lessons|length }} ders tahsilat bekliyor.</small>
+            <p class="text-xs text-gray-500 mt-2">{{ unpaid_lessons|length }} ders tahsilat bekliyor.</p>
         </div>
     </div>
     
-    <div class="col-md-6">
-        <div class="stat-widget">
-            <div class="stat-widget-glow" style="background: radial-gradient(circle, var(--accent-emerald-glow) 0%, transparent 70%);"></div>
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="stat-label">Son Tahsilatlar Toplamı</span>
-                <span class="badge-pill-emerald"><i class="bi bi-check-circle me-1"></i>Tahsil Edildi</span>
+    <!-- Stat 2 -->
+    <div class="relative overflow-hidden p-6 rounded-2xl bg-surface-elevated border border-white/5 shadow-glass hover:shadow-glass-hover hover:-translate-y-1 transition-all duration-300 group">
+        <div class="absolute -top-10 -right-10 w-40 h-40 bg-emerald-500/20 blur-3xl rounded-full group-hover:bg-emerald-500/30 transition-all"></div>
+        <div class="flex justify-between items-center mb-4 relative z-10">
+            <span class="text-xs font-bold tracking-wider text-gray-400 uppercase">Son Tahsilatlar Toplamı</span>
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
+                <i class="bi bi-check-circle"></i> Tahsil Edildi
+            </span>
+        </div>
+        <div class="relative z-10">
+            <div class="flex items-baseline gap-2">
+                <span class="font-display text-4xl font-extrabold text-white">{% if is_admin %}₺{{ "{:,.0f}".format(total_collected) if total_collected else '0' }}{% else %}₺***{% endif %}</span>
             </div>
-            <div class="stat-value text-white">₺{{ "{:,.0f}".format(total_collected) if total_collected else '0' }}</div>
-            <small class="text-secondary mt-1 d-block">Sistemde kayıtlı son tahsilatların hacmi.</small>
+            <p class="text-xs text-gray-500 mt-2">Sistemde kayıtlı son tahsilatların hacmi.</p>
         </div>
     </div>
 </div>
 
-<div class="row g-4">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
     <!-- Sol Kolon: Bekleyen Tahsilatlar Tablosu -->
-    <div class="col-xl-8 col-lg-7">
-        <div class="saas-card h-100 d-flex flex-column">
-            <div class="saas-card-header d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center gap-2">
-                    <i class="bi bi-hourglass-split text-warning"></i>
-                    <h5 class="mb-0 fw-bold">Tahsil Edilmeyi Bekleyen Dersler</h5>
+    <div class="lg:col-span-8 flex flex-col h-full">
+        <div class="bg-surface-elevated border border-white/5 rounded-2xl shadow-glass flex flex-col h-full overflow-hidden">
+            <div class="px-6 py-5 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400">
+                        <i class="bi bi-hourglass-split text-xl"></i>
+                    </div>
+                    <h2 class="text-lg font-bold text-white">Tahsil Edilmeyi Bekleyen Dersler</h2>
                 </div>
-                <span class="badge-pill-amber">{{ unpaid_lessons|length }} Ders</span>
+                <span class="px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold">{{ unpaid_lessons|length }} Ders</span>
             </div>
             
-            <div class="saas-card-body p-0 flex-grow-1">
+            <div class="flex-grow">
                 {% if unpaid_lessons %}
-                <div class="table-responsive">
-                    <table class="table table-borderless align-middle mb-0">
-                        <thead style="background: rgba(255, 255, 255, 0.02); border-bottom: 1px solid var(--border-subtle);">
-                            <tr>
-                                <th class="text-secondary small fw-bold text-uppercase py-3 ps-4">Ders Tarihi</th>
-                                <th class="text-secondary small fw-bold text-uppercase py-3">Öğrenci</th>
-                                <th class="text-secondary small fw-bold text-uppercase py-3">Tutar</th>
-                                <th class="text-secondary small fw-bold text-uppercase py-3 text-end pe-4">Aksiyon</th>
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-white/[0.02] border-b border-white/5">
+                                <th class="py-4 pl-6 pr-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Ders Tarihi</th>
+                                <th class="py-4 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Öğrenci</th>
+                                <th class="py-4 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Tutar</th>
+                                <th class="py-4 pl-4 pr-6 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Aksiyon</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="divide-y divide-white/5">
                             {% for lesson in unpaid_lessons %}
-                            <tr class="border-bottom" style="border-color: var(--border-subtle) !important;">
-                                <td class="ps-4">
-                                    <span class="text-white small fw-medium">
-                                        <i class="bi bi-calendar3 me-2 text-secondary"></i>
+                            <tr class="hover:bg-white/[0.01] transition-colors group">
+                                <td class="py-4 pl-6 pr-4">
+                                    <span class="text-sm font-medium text-white flex items-center whitespace-nowrap">
+                                        <i class="bi bi-calendar3 mr-2 text-gray-500 group-hover:text-amber-400 transition-colors"></i>
                                         {{ lesson.lesson_date.replace('T', ' ') }}
                                     </span>
                                 </td>
-                                <td>
-                                    <span class="fw-bold text-white">{{ lesson.full_name }}</span>
+                                <td class="py-4 px-4">
+                                    <span class="font-bold text-white block">{{ lesson.full_name }}</span>
                                     {% if lesson.topic %}
-                                    <small class="text-secondary d-block" style="font-size: 0.75rem;">{{ lesson.topic }}</small>
+                                    <span class="text-xs text-gray-500 mt-1 block truncate max-w-[200px]">{{ lesson.topic }}</span>
                                     {% endif %}
                                 </td>
-                                <td>
-                                    <span class="badge-pill-cyan">₺{{ lesson.hourly_rate }}</span>
+                                <td class="py-4 px-4">
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-md bg-brand-500/10 border border-brand-500/20 text-brand-400 text-sm font-bold whitespace-nowrap">
+                                        {% if is_admin %}₺{{ lesson.hourly_rate }}{% else %}₺***{% endif %}
+                                    </span>
                                 </td>
-                                <td class="text-end pe-4">
-                                    <form action="{{ url_for('pay_lesson', lesson_id=lesson.lesson_id) }}" method="POST" class="d-inline">
-                                        <button type="submit" class="btn-saas-emerald py-1 px-3" title="Tahsil Et">
+                                <td class="py-4 pl-4 pr-6 text-right whitespace-nowrap">
+                                    {% if is_admin %}
+                                    <form action="{{ url_for('pay_lesson', lesson_id=lesson.lesson_id) }}" method="POST" class="inline-block">
+                                        <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 hover:text-white border border-emerald-500/20 hover:border-emerald-500 text-emerald-400 text-sm font-medium transition-colors" title="Tahsil Et">
                                             <i class="bi bi-check2-circle"></i>
                                             <span>Tahsil Et</span>
                                         </button>
                                     </form>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}
@@ -94,12 +110,12 @@
                     </table>
                 </div>
                 {% else %}
-                <div class="text-center py-5 px-4">
-                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25);">
-                        <i class="bi bi-check-lg fs-2 text-success"></i>
+                <div class="flex flex-col items-center justify-center p-12 text-center h-full min-h-[300px]">
+                    <div class="w-20 h-20 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-5">
+                        <i class="bi bi-check-lg text-4xl text-emerald-400"></i>
                     </div>
-                    <h5 class="fw-bold text-white mb-1">Mükemmel! Bekleyen Borç Yok</h5>
-                    <p class="text-secondary small mb-0">İşlenen tüm derslerin ödemeleri eksiksiz tahsil edildi.</p>
+                    <h3 class="text-xl font-bold text-white mb-2">Mükemmel! Bekleyen Borç Yok</h3>
+                    <p class="text-gray-400 text-sm">İşlenen tüm derslerin ödemeleri eksiksiz tahsil edildi.</p>
                 </div>
                 {% endif %}
             </div>
@@ -107,43 +123,52 @@
     </div>
     
     <!-- Sağ Kolon: Son Tahsilatlar & Geri Alma -->
-    <div class="col-xl-4 col-lg-5">
-        <div class="saas-card h-100 d-flex flex-column">
-            <div class="saas-card-header d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center gap-2">
-                    <i class="bi bi-clock-history text-info"></i>
-                    <h5 class="mb-0 fw-bold">Son Tahsilatlar</h5>
+    <div class="lg:col-span-4 flex flex-col h-full">
+        <div class="bg-surface-elevated border border-white/5 rounded-2xl shadow-glass flex flex-col h-full overflow-hidden">
+            <div class="px-6 py-5 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-brand-500/10 flex items-center justify-center text-brand-400">
+                        <i class="bi bi-clock-history text-xl"></i>
+                    </div>
+                    <h2 class="text-lg font-bold text-white">Son Tahsilatlar</h2>
                 </div>
-                <span class="text-secondary small">Son 20</span>
+                <span class="text-xs font-medium text-gray-500">Son 20</span>
             </div>
             
-            <div class="saas-card-body p-0 flex-grow-1">
+            <div class="flex-grow flex flex-col">
                 {% if paid_lessons %}
-                <div class="list-group list-group-flush border-0">
+                <div class="divide-y divide-white/5 custom-scrollbar overflow-y-auto max-h-[500px]">
                     {% for p in paid_lessons %}
-                    <div class="list-group-item bg-transparent p-3 border-bottom d-flex justify-content-between align-items-center" style="border-color: var(--border-subtle) !important;">
+                    <div class="p-4 hover:bg-white/[0.01] transition-colors flex justify-between items-center group">
                         <div>
-                            <span class="text-white fw-bold d-block small mb-1">{{ p.full_name }}</span>
-                            <small class="text-secondary" style="font-size: 0.72rem;">
-                                <i class="bi bi-check-all text-success me-1"></i>{{ (p.payment_date|string).replace('T', ' ')[:16] if p.payment_date else '' }}
-                            </small>
+                            <span class="font-bold text-white text-sm block mb-1">{{ p.full_name }}</span>
+                            <span class="text-xs text-gray-500 flex items-center gap-1.5">
+                                <i class="bi bi-check-all text-emerald-500"></i>
+                                {{ (p.payment_date|string).replace('T', ' ')[:16] if p.payment_date else '' }}
+                            </span>
                         </div>
                         
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="badge-pill-emerald">₺{{ p.amount }}</span>
-                            <form action="{{ url_for('undo_payment', payment_id=p.payment_id) }}" method="POST" class="d-inline" onsubmit="return confirm('Bu tahsilatı geri almak (ödenmemiş yapmak) istediğinize emin misiniz?');">
-                                <button type="submit" class="btn btn-sm text-secondary hover-scale border-0 p-1" title="Tahsilatı Geri Al" aria-label="Geri Al">
-                                    <i class="bi bi-arrow-counterclockwise fs-5 text-warning opacity-75"></i>
+                        <div class="flex items-center gap-3">
+                            <span class="inline-flex items-center px-2 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-bold">
+                                {% if is_admin %}₺{{ p.amount }}{% else %}₺***{% endif %}
+                            </span>
+                            {% if is_admin %}
+                            <form action="{{ url_for('undo_payment', payment_id=p.payment_id) }}" method="POST" class="inline-block" onsubmit="return confirm('Bu tahsilatı geri almak (ödenmemiş yapmak) istediğinize emin misiniz?');">
+                                <button type="submit" class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-amber-400 hover:bg-amber-500/10 transition-colors" title="Tahsilatı Geri Al">
+                                    <i class="bi bi-arrow-counterclockwise"></i>
                                 </button>
                             </form>
+                            {% endif %}
                         </div>
                     </div>
                     {% endfor %}
                 </div>
                 {% else %}
-                <div class="text-center py-5 px-4">
-                    <i class="bi bi-inbox fs-2 text-secondary d-block mb-2 opacity-50"></i>
-                    <p class="text-secondary small mb-0">Henüz kaydedilmiş tahsilat bulunmuyor.</p>
+                <div class="flex flex-col items-center justify-center p-8 text-center flex-grow">
+                    <div class="w-16 h-16 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-center mb-4">
+                        <i class="bi bi-inbox text-3xl text-gray-500"></i>
+                    </div>
+                    <p class="text-sm text-gray-400">Henüz kaydedilmiş tahsilat bulunmuyor.</p>
                 </div>
                 {% endif %}
             </div>
