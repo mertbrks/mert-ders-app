@@ -3,118 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giriş Yap | Mert Ders Takip</title>
-    <!-- Tailwind CSS (CDN) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts -->
+    {% include '_theme_head.html' %}
+    <title>Giriş · Mert Ders Takip</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Bootstrap Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        display: ['Plus Jakarta Sans', 'sans-serif'],
-                    },
-                    colors: {
-                        brand: {
-                            50: '#f0f9ff',
-                            100: '#e0f2fe',
-                            200: '#bae6fd',
-                            300: '#7dd3fc',
-                            400: '#38bdf8',
-                            500: '#0ea5e9',
-                            600: '#0284c7',
-                            700: '#0369a1',
-                            800: '#075985',
-                            900: '#0c4a6e',
-                            950: '#082f49',
-                        },
-                        surface: {
-                            base: '#030712',
-                            elevated: '#111827',
-                            muted: '#1f2937',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=9">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='4' y='4' width='8' height='8' rx='2' fill='%23C8693F'/%3E%3C/svg%3E">
 </head>
-<body class="bg-surface-base text-gray-300 font-sans antialiased min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-    <!-- Background Elements -->
-    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
-        <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-brand-500/10 blur-[100px]"></div>
-        <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-brand-500/10 blur-[100px]"></div>
-        <div class="absolute top-[20%] right-[20%] w-[20%] h-[20%] rounded-full bg-brand-500/5 blur-[80px]"></div>
-        <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiLz48L3N2Zz4=')] opacity-50"></div>
-    </div>
-
-    <div class="w-full max-w-md relative z-10">
-        <!-- Logo -->
-        <div class="text-center mb-8">
-            <div class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center shadow-[0_0_30px_-5px_rgba(14,165,233,0.5)] mb-4 border border-white/20">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M4 19.5C4 18.1193 5.11929 17 6.5 17H19V3H6.5C5.11929 3 4 4.11929 4 5.5V19.5Z" fill="rgba(255,255,255,0.2)" stroke="#FFFFFF" stroke-width="1.8" stroke-linejoin="round"/>
-                    <line x1="8" y1="7" x2="15" y2="7" stroke="#E2E8F0" stroke-width="1.6" stroke-linecap="round"/>
-                    <line x1="8" y1="11" x2="13" y2="11" stroke="#E2E8F0" stroke-width="1.6" stroke-linecap="round"/>
-                    <path d="M14 16L20.5 4.5C20.8 4 21.5 4 21.8 4.5L22.5 5.5C22.8 6 22.8 6.7 22.3 7L16 18L13 18.5L14 16Z" fill="#bae6fd" stroke="#FFFFFF" stroke-width="1.2" stroke-linejoin="round"/>
-                </svg>
+<body>
+    <div class="corner-tools">{% include '_theme_button.html' %}</div>
+    <main class="login-wrap">
+        <div class="login reveal">
+            <div>
+                <h1>Mert Ders Takip</h1>
+                <p class="sub">Ders programı, öğrenci notları ve tahsilatlar.</p>
             </div>
-            <h1 class="text-2xl font-display font-extrabold text-white">Mert Ders Takip</h1>
-            <p class="text-gray-400 text-sm mt-1">Öğrenci ve ders yönetimi platformu</p>
-        </div>
 
-        <!-- Login Card -->
-        <div class="bg-surface-elevated/80 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
+            <div>
+                {% with messages = get_flashed_messages(with_categories=true) %}
                     {% for category, message in messages %}
-                        <div class="mb-6 p-3 rounded-xl {% if category == 'danger' %}bg-rose-500/10 border-rose-500/20 text-rose-400{% else %}bg-brand-500/10 border-brand-500/20 text-brand-400{% endif %} border text-sm flex items-center gap-2">
-                            <i class="bi {% if category == 'danger' %}bi-exclamation-octagon{% else %}bi-info-circle{% endif %}"></i>
-                            <span>{{ message }}</span>
-                        </div>
+                    <p class="login-msg" role="alert">{{ message }}</p>
                     {% endfor %}
-                {% endif %}
-            {% endwith %}
+                {% endwith %}
 
-            <form action="{{ url_for('login') }}" method="POST" class="space-y-6">
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">Yönetici Şifresi</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <i class="bi bi-lock text-gray-500"></i>
-                        </div>
-                        <input type="password" name="password" placeholder="Şifrenizi girin" class="w-full bg-surface-base border border-white/10 rounded-xl pl-11 pr-4 py-3 text-sm text-white focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all shadow-inner placeholder:text-gray-600">
-                    </div>
-                </div>
+                <form action="{{ url_for('login') }}" method="POST" class="form-stack">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <label class="field">
+                        <span>Yönetici şifresi</span>
+                        <input type="password" name="password" class="input" autocomplete="current-password" autofocus>
+                    </label>
+                    <button type="submit" name="action" value="admin" class="btn btn-primary btn-block">Giriş yap</button>
+                </form>
 
-                <button type="submit" name="action" value="admin" class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 hover:from-brand-400 hover:to-brand-500 text-white font-medium transition-all shadow-[0_0_20px_-5px_rgba(14,165,233,0.4)] hover:shadow-[0_0_25px_-5px_rgba(14,165,233,0.6)] hover:-translate-y-0.5">
-                    <span>Yönetici Girişi</span>
-                    <i class="bi bi-arrow-right"></i>
-                </button>
-                
-                <div class="relative flex items-center py-2">
-                    <div class="flex-grow border-t border-white/10"></div>
-                    <span class="flex-shrink-0 mx-4 text-xs text-gray-500 font-medium">VEYA</span>
-                    <div class="flex-grow border-t border-white/10"></div>
-                </div>
-                
-                <button type="submit" name="action" value="visitor" class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-surface-muted hover:bg-gray-700 border border-white/5 text-gray-300 font-medium transition-colors">
-                    <i class="bi bi-person"></i>
-                    <span>Ziyaretçi Olarak Devam Et</span>
-                </button>
-            </form>
+                <div class="divider">ya da</div>
+
+                <form action="{{ url_for('login') }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" name="action" value="visitor" class="btn btn-block">Ziyaretçi olarak göz at</button>
+                </form>
+                <p class="hint" style="margin-top:12px">Ziyaretçiler programı görür; ücretleri, veli telefonlarını göremez ve değişiklik yapamaz.</p>
+            </div>
         </div>
-        
-        <div class="text-center mt-8">
-            <p class="text-xs text-gray-500">Ziyaretçi modunda ücret ve finansal veriler gizlenir.</p>
-        </div>
-    </div>
+    </main>
+    <script src="{{ url_for('static', filename='js/main.js') }}?v=9"></script>
 </body>
 </html>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% include '_theme_head.html' %}
+    <title>{{ title }} · Mert Ders Takip</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=9">
+</head>
+<body>
+    <main class="login-wrap">
+        <div class="login">
+            <p class="hint num">Hata {{ code }}</p>
+            <h1>{{ title }}</h1>
+            <p class="sub">{{ message }}</p>
+            <div class="actions">
+                <a href="{{ url_for('index') }}" class="btn btn-primary">Ana sayfaya dön</a>
+                <button type="button" class="btn" onclick="history.back()">Geri</button>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

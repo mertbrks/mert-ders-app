@@ -1,0 +1,40 @@
+{% macro csrf_field() -%}
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+{%- endmacro %}
+
+{% macro status_label(status) -%}
+<span class="status {{ status }}">{% if status == 'yapildi' %}Yapıldı{% elif status == 'iptal' %}İptal{% else %}Planlandı{% endif %}</span>
+{%- endmacro %}
+
+{% macro student_fields(s=None, prefix='') -%}
+<div class="form-stack">
+    <label class="field">
+        <span>Ad soyad</span>
+        <input type="text" name="full_name" id="{{ prefix }}full_name" class="input" value="{{ s.full_name if s else '' }}" placeholder="Örn. Ahmet Yılmaz" required>
+    </label>
+    <div class="field-row">
+        <label class="field">
+            <span>Sınıf / seviye</span>
+            <input type="text" name="grade_level" id="{{ prefix }}grade_level" class="input" value="{{ s.grade_level if s else '' }}" placeholder="Örn. 8. sınıf LGS" required>
+        </label>
+        <label class="field">
+            <span>Veli telefonu</span>
+            <input type="tel" name="parent_contact" id="{{ prefix }}parent_contact" class="input" value="{{ (s.parent_contact or '') if s else '' }}" placeholder="05XX XXX XX XX">
+        </label>
+    </div>
+    <div class="field-row">
+        <label class="field">
+            <span>Ders ücreti (₺)</span>
+            <input type="number" step="0.01" min="0" name="hourly_rate" id="{{ prefix }}hourly_rate" class="input num" value="{{ s.hourly_rate if s else '' }}" placeholder="750" required>
+        </label>
+        <label class="field">
+            <span>Ders süresi (dk)</span>
+            <input type="number" min="15" max="480" step="5" name="default_duration" id="{{ prefix }}default_duration" class="input num" value="{{ (s.default_duration or 60) if s else 60 }}" required>
+        </label>
+    </div>
+    <label class="field">
+        <span>Notlar</span>
+        <textarea name="notes" id="{{ prefix }}notes" rows="2" class="input" placeholder="Hedef, eksik konular, veliyle ilgili notlar">{{ (s.notes or '') if s else '' }}</textarea>
+    </label>
+</div>
+{%- endmacro %}

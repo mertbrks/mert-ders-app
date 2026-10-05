@@ -1,232 +1,71 @@
 <!DOCTYPE html>
-<html lang="tr" class="dark">
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Mert Ders Takip{% endblock %} — Özel Ders Yönetimi</title>
-    
-    <!-- Google Fonts -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    {% include '_theme_head.html' %}
+    <title>{% block title %}Genel Bakış{% endblock %} · Mert Ders Takip</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Bootstrap Icons (Sadece ikonlar için kullanıyoruz, Bootstrap CSS'i sildik) -->
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        display: ['Plus Jakarta Sans', 'sans-serif'],
-                    },
-                    colors: {
-                        brand: {
-                            50: '#f0f9ff',
-                            100: '#e0f2fe',
-                            200: '#bae6fd',
-                            300: '#7dd3fc',
-                            400: '#38bdf8', // accent-cyan equivalent
-                            500: '#0ea5e9', // primary brand
-                            600: '#0284c7',
-                            700: '#0369a1',
-                            800: '#075985',
-                            900: '#0c4a6e',
-                            950: '#082f49',
-                        },
-                        surface: {
-                            base: '#030712', // gray-950
-                            elevated: '#111827', // gray-900
-                            muted: '#1f2937', // gray-800
-                        }
-                    },
-                    boxShadow: {
-                        'glass': 'inset 0 1px 0 0 rgba(255, 255, 255, 0.05), 0 12px 30px -8px rgba(0, 0, 0, 0.5)',
-                        'glass-hover': 'inset 0 1px 0 0 rgba(255, 255, 255, 0.1), 0 16px 36px -8px rgba(0, 0, 0, 0.7)',
-                        'glow-brand': '0 0 20px -5px rgba(14, 165, 233, 0.4)',
-                    },
-                    backgroundImage: {
-                        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-                    }
-                }
-            }
-        }
-    </script>
-
-    <!-- Custom CSS (Gereken küçük dokunuşlar için) -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=4.0">
-    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=9">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='4' y='4' width='8' height='8' rx='2' fill='%23C8693F'/%3E%3C/svg%3E">
     {% block head %}{% endblock %}
 </head>
-<body class="bg-surface-base text-gray-200 font-sans antialiased min-h-screen flex flex-col relative overflow-x-hidden">
-    
-    <!-- Sayfa Arka Plan Gradient Efektleri -->
-    <div class="fixed inset-0 z-[-1] pointer-events-none">
-        <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-brand-600/10 rounded-full blur-[120px]"></div>
-        <div class="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-emerald-600/10 rounded-full blur-[100px]"></div>
-    </div>
+<body>
+    {% set nav_items = [
+        ('index', 'Bugün', ['index']),
+        ('students', 'Öğrenciler', ['students', 'student_profile']),
+        ('schedule', 'Takvim', ['schedule']),
+        ('payments', 'Ödemeler', ['payments']),
+        ('resources', 'Kaynaklar', ['resources']),
+    ] %}
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a href="{{ url_for('index') }}" class="brand">
+                <span class="brand-mark" aria-hidden="true"></span>
+                <span class="brand-name">Mert Ders Takip</span>
+            </a>
 
-    <!-- Top Navigation Bar -->
-    <header class="sticky top-0 z-40 w-full backdrop-blur-xl bg-surface-base/80 border-b border-white/5 transition-all">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <!-- Logo & Brand -->
-                <a href="{{ url_for('index') }}" class="flex items-center gap-3 group">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center shadow-glow-brand border border-white/20 group-hover:scale-105 transition-transform">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M4 19.5C4 18.1193 5.11929 17 6.5 17H19V3H6.5C5.11929 3 4 4.11929 4 5.5V19.5Z" fill="rgba(255,255,255,0.2)" stroke="#FFFFFF" stroke-width="1.8" stroke-linejoin="round"/>
-                            <line x1="8" y1="7" x2="15" y2="7" stroke="#E2E8F0" stroke-width="1.6" stroke-linecap="round"/>
-                            <line x1="8" y1="11" x2="13" y2="11" stroke="#E2E8F0" stroke-width="1.6" stroke-linecap="round"/>
-                            <path d="M14 16L20.5 4.5C20.8 4 21.5 4 21.8 4.5L22.5 5.5C22.8 6 22.8 6.7 22.3 7L16 18L13 18.5L14 16Z" fill="#bae6fd" stroke="#FFFFFF" stroke-width="1.2" stroke-linejoin="round"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <div class="font-display font-bold text-white tracking-tight leading-tight group-hover:text-brand-300 transition-colors">Mert Ders Takip</div>
-                        <div class="text-[0.65rem] font-bold tracking-widest uppercase text-brand-400">Eğitmen Portali</div>
-                    </div>
-                </a>
+            <nav class="nav" id="main-nav" aria-label="Ana menü">
+                {% for endpoint, label, active in nav_items %}
+                <a href="{{ url_for(endpoint) }}" {% if request.endpoint in active %}aria-current="page"{% endif %}>{{ label }}</a>
+                {% endfor %}
+                <span class="nav-sep" aria-hidden="true"></span>
+                {% if not is_admin %}<span class="role-tag">Ziyaretçi</span>{% endif %}
+                <a href="{{ url_for('logout') }}">Çıkış</a>
+            </nav>
 
-                <!-- Mobile Menu Button -->
-                <button type="button" class="md:hidden p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-brand-500" aria-controls="mobile-menu" aria-expanded="false" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
-                    <i class="bi bi-list text-2xl"></i>
-                </button>
+            {# Sıra: tema, en sağda menü (mobilde menü açılır listesi akış dışında kalır) #}
+            {% include '_theme_button.html' %}
 
-                <!-- Desktop Navigation -->
-                <nav class="hidden md:flex items-center gap-1">
-                    <a href="{{ url_for('index') }}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 {% if request.endpoint == 'index' %}bg-brand-500/10 text-brand-400 border border-brand-500/20{% else %}text-gray-400 hover:text-white hover:bg-white/5{% endif %}">
-                        <i class="bi bi-grid"></i> Bugün
-                    </a>
-                    <a href="{{ url_for('students') }}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 {% if request.endpoint in ['students', 'student_profile'] %}bg-brand-500/10 text-brand-400 border border-brand-500/20{% else %}text-gray-400 hover:text-white hover:bg-white/5{% endif %}">
-                        <i class="bi bi-people"></i> Öğrenciler
-                    </a>
-                    <a href="{{ url_for('schedule') }}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 {% if request.endpoint == 'schedule' %}bg-brand-500/10 text-brand-400 border border-brand-500/20{% else %}text-gray-400 hover:text-white hover:bg-white/5{% endif %}">
-                        <i class="bi bi-calendar3"></i> Takvim
-                    </a>
-                    <a href="{{ url_for('payments') }}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 {% if request.endpoint == 'payments' %}bg-brand-500/10 text-brand-400 border border-brand-500/20{% else %}text-gray-400 hover:text-white hover:bg-white/5{% endif %}">
-                        <i class="bi bi-wallet2"></i> Ödemeler
-                    </a>
-                    <a href="{{ url_for('resources') }}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 {% if request.endpoint == 'resources' %}bg-brand-500/10 text-brand-400 border border-brand-500/20{% else %}text-gray-400 hover:text-white hover:bg-white/5{% endif %}">
-                        <i class="bi bi-folder2-open"></i> Kaynaklar
-                    </a>
-                    
-                    <!-- Logout Divider -->
-                    <div class="h-6 w-px bg-white/10 mx-1 hidden md:block"></div>
-                    <a href="{{ url_for('logout') }}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-rose-400 hover:text-white hover:bg-rose-500/20 transition-all duration-200" title="Çıkış Yap">
-                        <i class="bi bi-box-arrow-right"></i> <span class="md:hidden">Çıkış Yap</span>
-                    </a>
-                </nav>
-            </div>
-        </div>
-
-        <!-- Mobile Navigation Menu -->
-        <div class="md:hidden hidden border-t border-white/5 bg-surface-elevated/95 backdrop-blur-xl" id="mobile-menu">
-            <div class="px-2 pt-2 pb-3 space-y-1">
-                <a href="{{ url_for('index') }}" class="block px-3 py-2 rounded-md text-base font-medium {% if request.endpoint == 'index' %}bg-brand-500/10 text-brand-400{% else %}text-gray-300 hover:bg-white/5 hover:text-white{% endif %}">
-                    <i class="bi bi-grid mr-2"></i> Bugün
-                </a>
-                <a href="{{ url_for('students') }}" class="block px-3 py-2 rounded-md text-base font-medium {% if request.endpoint in ['students', 'student_profile'] %}bg-brand-500/10 text-brand-400{% else %}text-gray-300 hover:bg-white/5 hover:text-white{% endif %}">
-                    <i class="bi bi-people mr-2"></i> Öğrenciler
-                </a>
-                <a href="{{ url_for('schedule') }}" class="block px-3 py-2 rounded-md text-base font-medium {% if request.endpoint == 'schedule' %}bg-brand-500/10 text-brand-400{% else %}text-gray-300 hover:bg-white/5 hover:text-white{% endif %}">
-                    <i class="bi bi-calendar3 mr-2"></i> Takvim
-                </a>
-                <a href="{{ url_for('payments') }}" class="block px-3 py-2 rounded-md text-base font-medium {% if request.endpoint == 'payments' %}bg-brand-500/10 text-brand-400{% else %}text-gray-300 hover:bg-white/5 hover:text-white{% endif %}">
-                    <i class="bi bi-wallet2 mr-2"></i> Ödemeler
-                </a>
-                <a href="{{ url_for('resources') }}" class="block px-3 py-2 rounded-md text-base font-medium {% if request.endpoint == 'resources' %}bg-brand-500/10 text-brand-400{% else %}text-gray-300 hover:bg-white/5 hover:text-white{% endif %}">
-                    <i class="bi bi-folder2-open mr-2"></i> Kaynaklar
-                </a>
-                <div class="border-t border-white/5 mt-2 pt-2">
-                    <a href="{{ url_for('logout') }}" class="block px-3 py-2 rounded-md text-base font-medium text-rose-400 hover:bg-rose-500/10 hover:text-rose-300">
-                        <i class="bi bi-box-arrow-right mr-2"></i> Çıkış Yap
-                    </a>
-                </div>
-            </div>
+            <button type="button" class="icon-btn menu-btn" aria-controls="main-nav" aria-expanded="false" aria-label="Menüyü aç">
+                <i class="bi bi-list" style="font-size:20px" aria-hidden="true"></i>
+            </button>
         </div>
     </header>
 
-    <!-- Main Content Area -->
-    <main class="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-        <!-- Flash Alerts -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            <div class="mb-8 space-y-4">
-              {% for category, message in messages %}
-                <div class="flex items-start gap-4 p-4 rounded-2xl border bg-surface-elevated shadow-glass 
-                    {% if category == 'success' %}border-emerald-500/30
-                    {% elif category == 'warning' %}border-amber-500/30
-                    {% elif category == 'danger' or category == 'error' %}border-rose-500/30
-                    {% else %}border-brand-500/30{% endif %}"
-                    role="alert">
-                  
-                  <div class="flex-shrink-0 mt-0.5">
-                    <i class="bi text-xl 
-                        {% if category == 'success' %}bi-check-circle-fill text-emerald-400
-                        {% elif category == 'warning' %}bi-exclamation-triangle-fill text-amber-400
-                        {% elif category == 'danger' or category == 'error' %}bi-x-circle-fill text-rose-400
-                        {% else %}bi-info-circle-fill text-brand-400{% endif %}">
-                    </i>
-                  </div>
-                  
-                  <div class="flex-grow text-sm font-medium text-gray-200">
-                      {{ message }}
-                  </div>
-                  
-                  <button type="button" class="flex-shrink-0 text-gray-400 hover:text-white transition-colors" onclick="this.parentElement.remove()" aria-label="Kapat">
-                      <i class="bi bi-x-lg"></i>
-                  </button>
-                </div>
-              {% endfor %}
-            </div>
-          {% endif %}
-        {% endwith %}
-
-        <div class="animate-fade-in-up">
-            {% block content %}{% endblock %}
-        </div>
+    <main class="page">
+        {% block content %}{% endblock %}
     </main>
 
-    <footer class="mt-auto border-t border-white/5 bg-surface-base py-6">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p class="text-sm text-gray-500">© 2026 Mert Ders Takip. Tüm hakları saklıdır.</p>
-            <div class="flex gap-4">
-                <a href="#" class="text-gray-500 hover:text-brand-400 transition-colors"><i class="bi bi-github"></i></a>
-                <a href="#" class="text-gray-500 hover:text-brand-400 transition-colors"><i class="bi bi-twitter-x"></i></a>
-            </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flashes" role="status" aria-live="polite">
+        {% for category, message in messages %}
+        <div class="flash {{ category }}">
+            <p>{{ message }}</p>
+            <button type="button" class="icon-btn" aria-label="Kapat"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
         </div>
-    </footer>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
 
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-    <style>
-        /* Custom Keyframes for Animations */
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in-up {
-            animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-        
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #030712; 
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #1f2937; 
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #374151; 
-        }
-    </style>
+    <script src="{{ url_for('static', filename='js/main.js') }}?v=9"></script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

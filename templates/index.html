@@ -1,386 +1,272 @@
 {% extends 'base.html' %}
 
-{% block title %}Dashboard | Mert Ders Takip{% endblock %}
+{% block title %}Bugün{% endblock %}
 
 {% block content %}
-<!-- Top Header & Actions -->
-<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
+<div class="page-head">
     <div>
-        <h1 class="text-3xl md:text-4xl font-display font-extrabold tracking-tight text-white mb-2">Eğitmen Paneli 👋</h1>
-        <p class="text-gray-400 text-sm md:text-base">Bugünkü ders programın, bekleyen tahsilatların ve hızlı aksiyonların.</p>
+        <h1>Bugün</h1>
+        <p class="sub">{{ today_label }}</p>
     </div>
-    <div class="flex items-center gap-3 w-full md:w-auto">
-        <a href="{{ url_for('schedule') }}" class="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 hover:from-brand-400 hover:to-brand-500 text-white font-medium text-sm transition-all shadow-[0_0_20px_-5px_rgba(14,165,233,0.4)] hover:shadow-[0_0_25px_-5px_rgba(14,165,233,0.6)] hover:-translate-y-0.5">
-            <i class="bi bi-calendar-plus"></i>
-            <span>Ders Planla</span>
-        </a>
-        <a href="{{ url_for('students') }}" class="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-surface-muted hover:bg-gray-700 text-white font-medium text-sm transition-all border border-white/10 hover:border-white/20 hover:-translate-y-0.5">
-            <i class="bi bi-person-plus"></i>
-            <span>Öğrenci Ekle</span>
-        </a>
+    {% if is_admin %}
+    <div class="actions">
+        <a href="{{ url_for('students') }}" class="btn">Öğrenci ekle</a>
+        <a href="{{ url_for('schedule') }}" class="btn btn-primary"><i class="bi bi-plus-lg" aria-hidden="true"></i> Ders planla</a>
     </div>
+    {% endif %}
 </div>
 
-<!-- Stat KPI Cards -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-    
-    <!-- Stat 1 -->
-    <div class="relative overflow-hidden p-6 rounded-2xl bg-surface-elevated border border-white/5 shadow-glass hover:shadow-glass-hover hover:-translate-y-1 transition-all duration-300 group">
-        <div class="absolute -top-10 -right-10 w-40 h-40 bg-brand-500/20 blur-3xl rounded-full group-hover:bg-brand-500/30 transition-all"></div>
-        <div class="flex justify-between items-center mb-4 relative z-10">
-            <span class="text-xs font-bold tracking-wider text-gray-400 uppercase">Bugünkü Dersler</span>
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-xs font-semibold">
-                <i class="bi bi-calendar-check"></i> Bugün
-            </span>
-        </div>
-        <div class="relative z-10">
-            <div class="flex items-baseline gap-2">
-                <span class="font-display text-4xl font-extrabold text-white">{{ todays_lessons|length }}</span>
-                <span class="text-sm font-medium text-gray-500">Ders</span>
-            </div>
-            <p class="text-xs text-gray-500 mt-2">
-                {% if todays_lessons %}
-                    Bugün tamamlanmayı bekleyen dersleriniz var.
-                {% else %}
-                    Bugün için planlanmış ders bulunmuyor.
-                {% endif %}
-            </p>
-        </div>
+<section class="summary reveal{% if not is_admin %} is-3{% endif %}" aria-label="Özet">
+    {% if is_admin %}
+    <div class="hero">
+        <span class="label">Alacağın</span>
+        <div class="hero-value">{{ total_pending|tl }}</div>
+        <p class="hero-note">
+            {% if pending_lesson_count %}
+            {{ pending_lesson_count }} dersin ödemesi bekleniyor · <a href="{{ url_for('payments') }}">Ödemelere git</a>
+            {% else %}
+            Tüm derslerin ödemesi alınmış.
+            {% endif %}
+        </p>
     </div>
-
-    <!-- Stat 2 -->
-    <div class="relative overflow-hidden p-6 rounded-2xl bg-surface-elevated border border-white/5 shadow-glass hover:shadow-glass-hover hover:-translate-y-1 transition-all duration-300 group">
-        <div class="absolute -top-10 -right-10 w-40 h-40 bg-amber-500/20 blur-3xl rounded-full group-hover:bg-amber-500/30 transition-all"></div>
-        <div class="flex justify-between items-center mb-4 relative z-10">
-            <span class="text-xs font-bold tracking-wider text-gray-400 uppercase">Bekleyen Bakiye</span>
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold">
-                <i class="bi bi-hourglass-split"></i> Tahsilat
-            </span>
-        </div>
-        <div class="relative z-10">
-            <div class="flex items-baseline gap-2">
-                <span class="font-display text-4xl font-extrabold text-white">{% if is_admin %}₺{{ "{:,.0f}".format(total_pending) if total_pending else '0' }}{% else %}₺***{% endif %}</span>
-            </div>
-            <p class="text-xs text-gray-500 mt-2">Tamamlanan derslerden tahsil edilmemiş tutar.</p>
-        </div>
+    <div>
+        <span class="label">{{ this_month_label }} tahsilatı</span>
+        <div class="small-value num">{{ this_month_income|tl }}</div>
     </div>
-
-    <!-- Stat 3 -->
-    <div class="relative overflow-hidden p-6 rounded-2xl bg-surface-elevated border border-white/5 shadow-glass hover:shadow-glass-hover hover:-translate-y-1 transition-all duration-300 group md:col-span-2 lg:col-span-1">
-        <div class="absolute -top-10 -right-10 w-40 h-40 bg-emerald-500/20 blur-3xl rounded-full group-hover:bg-emerald-500/30 transition-all"></div>
-        <div class="flex justify-between items-center mb-4 relative z-10">
-            <span class="text-xs font-bold tracking-wider text-gray-400 uppercase">Kayıtlı Öğrenciler</span>
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
-                <i class="bi bi-people"></i> Portföy
-            </span>
-        </div>
-        <div class="relative z-10">
-            <div class="flex items-baseline gap-2">
-                <span class="font-display text-4xl font-extrabold text-white">{{ student_count }}</span>
-                <span class="text-sm font-medium text-gray-500">Öğrenci</span>
-            </div>
-            <p class="text-xs text-gray-500 mt-2">Sistemde aktif takip edilen öğrenciler.</p>
-        </div>
+    {% else %}
+    <div class="hero">
+        <span class="label">Bugünkü ders</span>
+        <div class="hero-value num">{{ todays_lessons|length }}</div>
+        <p class="hero-note">Ziyaretçi görünümü: ücret bilgileri gizli.</p>
     </div>
-
-</div>
-
-<!-- Main Grid -->
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-10">
-    
-    <!-- Bugünkü Dersler Akışı -->
-    <div class="lg:col-span-7 flex flex-col h-full">
-        <div class="bg-surface-elevated border border-white/5 rounded-2xl shadow-glass flex flex-col h-full overflow-hidden">
-            <!-- Header -->
-            <div class="px-6 py-5 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-lg bg-brand-500/10 flex items-center justify-center text-brand-400">
-                        <i class="bi bi-lightning-charge-fill"></i>
-                    </div>
-                    <h2 class="text-lg font-bold text-white">Bugünkü Dersler</h2>
-                </div>
-                <span class="px-3 py-1 bg-brand-500/10 border border-brand-500/20 text-brand-400 text-xs font-semibold rounded-full">{{ todays_lessons|length }} Kayıt</span>
-            </div>
-            
-            <!-- Body -->
-            <div class="flex-grow flex flex-col">
-                {% if todays_lessons %}
-                <div class="divide-y divide-white/5">
-                    {% for lesson in todays_lessons %}
-                    <div class="p-5 hover:bg-white/[0.02] transition-colors" id="lesson-row-{{ lesson.id }}">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                            
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-500/20 to-brand-600/20 border border-brand-500/30 flex items-center justify-center text-brand-300 font-bold text-lg shadow-inner">
-                                    {{ lesson.full_name[0] }}
-                                </div>
-                                <div>
-                                    <h3 class="font-bold text-white text-base mb-1">{{ lesson.full_name }}</h3>
-                                    <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-400 font-medium">
-                                        <span class="flex items-center gap-1"><i class="bi bi-clock"></i> {{ (lesson.lesson_date|string).split('T')[1] if 'T' in (lesson.lesson_date|string) else (lesson.lesson_date|string) }}</span>
-                                        <span class="w-1 h-1 rounded-full bg-gray-600"></span>
-                                        <span>{{ lesson.duration_minutes or 60 }} dk</span>
-                                        {% if lesson.topic %}
-                                        <span class="w-1 h-1 rounded-full bg-gray-600"></span>
-                                        <span class="text-brand-400">{{ lesson.topic }}</span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="flex items-center gap-4 sm:gap-3 justify-between sm:justify-end">
-                                <span id="status-pill-{{ lesson.id }}" class="px-2.5 py-1 rounded-full text-xs font-semibold border
-                                    {% if lesson.status == 'yapildi' %}bg-emerald-500/10 border-emerald-500/20 text-emerald-400
-                                    {% elif lesson.status == 'iptal' %}bg-rose-500/10 border-rose-500/20 text-rose-400
-                                    {% else %}bg-brand-500/10 border-brand-500/20 text-brand-400{% endif %}">
-                                    {% if lesson.status == 'yapildi' %}Yapıldı{% elif lesson.status == 'iptal' %}İptal{% else %}Planlandı{% endif %}
-                                </span>
-                                
-                                <div class="flex items-center gap-1 bg-surface-muted rounded-lg p-1 border border-white/5">
-                                    <button type="button" class="quick-status-btn w-8 h-8 rounded-md flex items-center justify-center text-gray-400 hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors" data-id="{{ lesson.id }}" data-status="yapildi" title="Yapıldı">
-                                        <i class="bi bi-check2 text-lg"></i>
-                                    </button>
-                                    <button type="button" class="quick-status-btn w-8 h-8 rounded-md flex items-center justify-center text-gray-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors" data-id="{{ lesson.id }}" data-status="iptal" title="İptal">
-                                        <i class="bi bi-x text-lg"></i>
-                                    </button>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <div class="flex-grow flex flex-col items-center justify-center p-10 text-center">
-                    <div class="w-16 h-16 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-center mb-4">
-                        <i class="bi bi-cup-hot text-2xl text-gray-500"></i>
-                    </div>
-                    <h3 class="font-bold text-white mb-2">Bugün Serbest Gün</h3>
-                    <p class="text-sm text-gray-400 max-w-xs mx-auto">Bugün için kayıtlı ders yok. Dinlenebilir veya yeni ders ekleyebilirsin.</p>
-                </div>
-                {% endif %}
-            </div>
-            
-            <!-- Footer Action -->
-            <div class="p-4 border-t border-white/5 bg-white/[0.01]">
-                <a href="{{ url_for('schedule') }}" class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-surface-muted hover:bg-gray-700 text-gray-300 font-medium text-sm transition-colors border border-white/5">
-                    <span>Haftalık Takvime Git</span>
-                    <i class="bi bi-arrow-right"></i>
-                </a>
-            </div>
-        </div>
+    <div>
+        <span class="label">Tahsilat</span>
+        <div class="small-value masked">gizli</div>
     </div>
-    
-    <!-- Sağ Kolon (Bekleyen Ödeme & Notlar) -->
-    <div class="lg:col-span-5 flex flex-col gap-6 h-full">
-        
-        <!-- Hızlı Bakiye Kartı -->
-        <div class="bg-surface-elevated border border-white/5 rounded-2xl shadow-glass p-6 relative overflow-hidden group hover:border-amber-500/30 transition-colors">
-            <div class="absolute -right-4 -bottom-4 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition-all"></div>
-            
-            <div class="flex justify-between items-start mb-6 relative z-10">
-                <div>
-                    <span class="text-xs font-bold tracking-wider text-gray-400 uppercase block mb-2">Tahsilat Bekleyen</span>
-                    <h3 class="font-display text-3xl font-extrabold text-white">₺{{ "{:,.0f}".format(total_pending) if total_pending else '0' }}</h3>
-                </div>
-                <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-                    <i class="bi bi-wallet2 text-xl"></i>
-                </div>
-            </div>
-            
-            <p class="text-sm text-gray-400 mb-6 relative z-10">İşlenen dersler arasından henüz ücreti alınmamış olanların dökümü.</p>
-            
-            <a href="{{ url_for('payments') }}" class="relative z-10 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-surface-muted hover:bg-amber-500/10 hover:text-amber-400 hover:border-amber-500/30 text-gray-300 font-medium text-sm transition-all border border-white/10">
-                <i class="bi bi-cash-stack"></i>
-                <span>Ödeme Tablosuna Git</span>
-            </a>
+    {% endif %}
+    {% if is_admin %}
+    <div>
+        <span class="label">Bugünkü ders</span>
+        <div class="small-value num">{{ todays_lessons|length }}</div>
+    </div>
+    {% endif %}
+    <div>
+        <span class="label">Öğrenci</span>
+        <div class="small-value num">{{ student_count }}</div>
+    </div>
+</section>
+
+<div class="grid grid-main">
+    <section class="panel" aria-labelledby="today-title">
+        <div class="panel-head">
+            <h2 id="today-title">Günün programı</h2>
+            <a href="{{ url_for('schedule') }}" class="link">Takvim</a>
         </div>
-        
-        <!-- Hızlı Not Defteri -->
-        <div class="bg-surface-elevated border border-white/5 rounded-2xl shadow-glass flex flex-col flex-grow overflow-hidden">
-            <div class="px-5 py-4 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
-                <div class="flex items-center gap-2">
-                    <i class="bi bi-sticky-fill text-amber-400"></i>
-                    <h3 class="font-bold text-white text-sm">Hızlı Notlar</h3>
+
+        {% if todays_lessons %}
+        <ul class="rows reveal">
+            {% for lesson in todays_lessons %}
+            <li class="row" data-lesson="{{ lesson.id }}">
+                <div class="row-time num">
+                    {{ lesson.lesson_date|saat }}
+                    <small>{{ lesson.duration_minutes or 60 }} dk</small>
                 </div>
-                <span class="text-xs font-medium text-gray-500">{{ quick_notes|length }} Not</span>
-            </div>
-            
-            <div class="p-5 flex flex-col flex-grow">
-                <form action="{{ url_for('add_note') }}" method="POST" class="mb-5">
-                    <div class="relative flex items-center">
-                        <input type="text" name="content" class="w-full bg-surface-base border border-white/10 rounded-xl py-2.5 pl-4 pr-12 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all shadow-inner" placeholder="Öğrenci veya ders ile ilgili not al..." required>
-                        <button type="submit" class="absolute right-1.5 p-1.5 rounded-lg bg-brand-500/20 text-brand-400 hover:bg-brand-500 hover:text-white transition-colors">
-                            <i class="bi bi-plus-lg"></i>
-                        </button>
+                <div class="row-main">
+                    <div class="row-title"><a href="{{ url_for('student_profile', id=lesson.student_id) }}">{{ lesson.full_name }}</a></div>
+                    <div class="row-sub">{{ lesson.topic or 'Konu girilmedi' }}</div>
+                </div>
+                <div class="row-end">
+                    <span class="status {{ lesson.status }}" data-status-label>
+                        {% if lesson.status == 'yapildi' %}Yapıldı{% elif lesson.status == 'iptal' %}İptal{% else %}Planlandı{% endif %}
+                    </span>
+                    {% if is_admin %}
+                    <div class="seg" role="group" aria-label="{{ lesson.full_name }} dersinin durumu">
+                        <button type="button" data-set-status="yapildi" aria-pressed="{{ 'true' if lesson.status == 'yapildi' else 'false' }}">Yapıldı</button>
+                        <button type="button" data-set-status="iptal" aria-pressed="{{ 'true' if lesson.status == 'iptal' else 'false' }}">İptal</button>
                     </div>
+                    {% endif %}
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div class="empty">
+            <h3>Bugün ders yok</h3>
+            <p>Takvimden yeni bir ders ekleyebilir ya da haftanın geri kalanına bakabilirsin.</p>
+            <a href="{{ url_for('schedule') }}" class="btn">Takvimi aç</a>
+        </div>
+        {% endif %}
+    </section>
+
+    <div class="stack">
+        {% if is_admin %}
+        <section class="panel" aria-labelledby="notes-title">
+            <div class="panel-head">
+                <h2 id="notes-title">Notlar</h2>
+                <span class="meta num">{{ quick_notes|length }}</span>
+            </div>
+            <div class="panel-body">
+                <form action="{{ url_for('add_note') }}" method="POST" class="note-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <label class="sr-only" for="note-input">Yeni not</label>
+                    <input id="note-input" type="text" name="content" class="input" placeholder="Örn. Ayşe'ye deneme sınavı getir" maxlength="500" required>
+                    <button type="submit" class="btn">Ekle</button>
                 </form>
-                
+
                 {% if quick_notes %}
-                <div class="flex flex-col gap-3 overflow-y-auto max-h-[250px] pr-2 custom-scrollbar">
+                <ul class="note-list">
                     {% for note in quick_notes %}
-                    <div class="group relative p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-colors">
-                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-amber-500 rounded-l-xl opacity-70"></div>
-                        <div class="pl-2 pr-6">
-                            <p class="text-sm text-gray-200 mb-1.5 leading-relaxed">{{ note.content }}</p>
-                            <span class="text-[0.7rem] font-medium text-gray-500 flex items-center gap-1">
-                                <i class="bi bi-clock"></i> {{ (note.created_at|string)[:16] if note.created_at else '' }}
-                            </span>
-                        </div>
-                        <form action="{{ url_for('delete_note', note_id=note.id) }}" method="POST" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button type="submit" class="p-1.5 rounded-lg text-gray-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors" title="Sil">
-                                <i class="bi bi-trash3 text-xs"></i>
-                            </button>
+                    <li class="note-item">
+                        <p>{{ note.content }}<time>{{ note.created_at|tarih }}</time></p>
+                        <form action="{{ url_for('delete_note', note_id=note.id) }}" method="POST">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="icon-btn is-danger" aria-label="Notu sil"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
                         </form>
-                    </div>
+                    </li>
                     {% endfor %}
-                </div>
+                </ul>
                 {% else %}
-                <div class="flex-grow flex items-center justify-center py-6 text-center">
-                    <p class="text-sm text-gray-500">Henüz kaydedilmiş notunuz bulunmuyor.</p>
-                </div>
+                <p class="hint" style="margin-top:12px">Henüz not yok. Aklındakini yaz, burada dursun.</p>
                 {% endif %}
             </div>
-        </div>
-        
-    </div>
-</div>
+        </section>
+        {% endif %}
 
-<!-- 6 Aylık Gelir Analizi Grafiği -->
-<div class="bg-surface-elevated border border-white/5 rounded-2xl shadow-glass overflow-hidden">
-    <div class="px-6 py-5 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
-        <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-lg bg-brand-500/10 flex items-center justify-center text-brand-400">
-                <i class="bi bi-bar-chart-fill"></i>
+        {% if is_admin %}
+        <section class="panel" aria-labelledby="chart-title">
+            <div class="panel-head">
+                <h2 id="chart-title">Aylık tahsilat</h2>
+                <span class="meta">{{ chart_range }}</span>
             </div>
-            <h2 class="text-lg font-bold text-white">Son 6 Aylık Tahsilat Analizi</h2>
-        </div>
-        <span class="text-xs font-medium text-gray-500 hidden sm:flex items-center gap-1">
-            <i class="bi bi-info-circle"></i> Gerçekleşen tahsilatlar
-        </span>
-    </div>
-    <div class="p-6">
-        <div class="h-[320px] w-full">
-            <canvas id="incomeChart"></canvas>
-        </div>
+            <div class="panel-body">
+                <div class="chart-box">
+                    <canvas id="incomeChart" role="img" aria-label="Son altı ayın tahsilat grafiği"></canvas>
+                    {% if chart_data|sum == 0 %}
+                    <div class="chart-empty"><p>Bu dönemde kayıtlı tahsilat yok.<br>Ödemeler sayfasından ilk tahsilatı işle.</p></div>
+                    {% endif %}
+                </div>
+                <table class="sr-only">
+                    <caption>Aylık tahsilat, {{ chart_range }}</caption>
+                    <tr><th>Ay</th><th>Tutar</th></tr>
+                    {% for i in range(chart_labels|length) %}
+                    <tr><td>{{ chart_labels[i] }}</td><td>{{ chart_data[i]|tl }}</td></tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </section>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% if is_admin %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    // Quick status toggle with AJAX
-    const statusButtons = document.querySelectorAll('.quick-status-btn');
-    statusButtons.forEach(btn => {
-        btn.addEventListener('click', async function() {
-            const lessonId = this.dataset.id;
-            const newStatus = this.dataset.status;
-            
-            try {
-                const response = await fetch(`/api/lessons/${lessonId}/status`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ status: newStatus })
-                });
-                const result = await response.json();
-                
-                if (result.success) {
-                    const pill = document.getElementById(`status-pill-${lessonId}`);
-                    if (pill) {
-                        // Reset classes
-                        pill.className = "px-2.5 py-1 rounded-full text-xs font-semibold border";
-                        
-                        // Add Tailwind classes based on status
-                        if (newStatus === 'yapildi') {
-                            pill.classList.add('bg-emerald-500/10', 'border-emerald-500/20', 'text-emerald-400');
-                            pill.textContent = 'Yapıldı';
-                        } else if (newStatus === 'iptal') {
-                            pill.classList.add('bg-rose-500/10', 'border-rose-500/20', 'text-rose-400');
-                            pill.textContent = 'İptal';
-                        } else {
-                            pill.classList.add('bg-brand-500/10', 'border-brand-500/20', 'text-brand-400');
-                            pill.textContent = 'Planlandı';
-                        }
-                    }
-                } else {
-                    alert('Hata: ' + (result.error || 'İşlem gerçekleştirilemedi.'));
+(function () {
+    const LABELS = { planlandi: 'Planlandı', yapildi: 'Yapıldı', iptal: 'İptal' };
+
+    // Hızlı durum değişikliği: aynı düğmeye tekrar basmak 'planlandı'ya döndürür
+    document.querySelectorAll('[data-lesson]').forEach(function (row) {
+        const id = row.dataset.lesson;
+        const label = row.querySelector('[data-status-label]');
+        const buttons = row.querySelectorAll('[data-set-status]');
+
+        buttons.forEach(function (btn) {
+            btn.addEventListener('click', async function () {
+                const target = btn.getAttribute('aria-pressed') === 'true' ? 'planlandi' : btn.dataset.setStatus;
+                buttons.forEach(b => b.disabled = true);
+                try {
+                    await postJSON(`/api/lessons/${id}/status`, { status: target });
+                    label.className = 'status ' + target;
+                    label.textContent = LABELS[target];
+                    buttons.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.setStatus === target)));
+                } catch (err) {
+                    toast(err.message + ' Sayfayı yenileyip tekrar deneyin.', 'danger');
+                } finally {
+                    buttons.forEach(b => b.disabled = false);
                 }
-            } catch (err) {
-                console.error(err);
-            }
+            });
         });
     });
 
-    // Chart.js - Updated for new Tailwind palette
-    const ctx = document.getElementById('incomeChart');
-    if (ctx) {
-        const labels = {{ chart_labels | tojson }};
-        const data = {{ chart_data | tojson }};
-        
-        new Chart(ctx, {
+    // Grafik: tek seri, içinde bulunulan ay vurgu renginde, öncekiler sade
+    const canvas = document.getElementById('incomeChart');
+    if (!canvas || typeof Chart === 'undefined') return;
+
+    const labels = {{ chart_labels | tojson }};
+    const data = {{ chart_data | tojson }};
+    if (data.every(x => x === 0)) return;
+
+    const money = n => n.toLocaleString('tr-TR', { maximumFractionDigits: 0 }) + ' ₺';
+    const last = data.length - 1;
+
+    // Renkler CSS token'larından okunur; tema değişince yeniden uygulanır
+    function paint(chart) {
+        const css = getComputedStyle(document.documentElement);
+        const v = name => css.getPropertyValue(name).trim();
+        const ds = chart.data.datasets[0];
+        ds.backgroundColor = data.map((_, i) => i === last ? v('--accent') : v('--line-strong'));
+        ds.hoverBackgroundColor = data.map((_, i) => i === last ? v('--accent-hover') : v('--muted'));
+        const tip = chart.options.plugins.tooltip;
+        tip.backgroundColor = v('--surface');
+        tip.titleColor = v('--ink');
+        tip.bodyColor = v('--ink-2');
+        tip.borderColor = v('--line');
+        chart.options.scales.y.grid.color = v('--line');
+        chart.options.scales.y.ticks.color = v('--muted');
+        chart.options.scales.x.border.color = v('--line-strong');
+        chart.options.scales.x.ticks.color = v('--ink-2');
+        chart.update('none');
+    }
+
+    // Webfont yüklenmeden ölçüm yapılırsa eksen etiketleri kesilir
+    (document.fonts ? document.fonts.ready : Promise.resolve()).then(function () {
+        const chart = new Chart(canvas, {
             type: 'bar',
             data: {
-                labels: labels,
+                labels,
                 datasets: [{
-                    label: 'Aylık Tahsilat (TL)',
-                    data: data,
-                    backgroundColor: 'rgba(14, 165, 233, 0.2)', // brand-500 with opacity
-                    borderColor: '#0ea5e9', // brand-500
-                    borderWidth: 2,
-                    borderRadius: 6,
-                    hoverBackgroundColor: 'rgba(14, 165, 233, 0.4)',
-                    borderSkipped: false
+                    data,
+                    borderRadius: { topLeft: 4, topRight: 4 },
+                    borderSkipped: 'bottom',
+                    maxBarThickness: 24
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: { duration: 250 },
                 plugins: {
-                    legend: {
-                        display: false
-                    },
+                    legend: { display: false },
                     tooltip: {
-                        backgroundColor: '#111827', // surface-elevated
-                        titleColor: '#f3f4f6',
-                        bodyColor: '#38bdf8', // brand-400
-                        borderColor: 'rgba(255, 255, 255, 0.1)',
                         borderWidth: 1,
-                        padding: 12,
-                        boxPadding: 6,
-                        usePointStyle: true,
-                        callbacks: {
-                            label: function(context) {
-                                return ' Gelir: ₺' + context.parsed.y.toLocaleString('tr-TR');
-                            }
-                        }
+                        padding: 10,
+                        displayColors: false,
+                        titleFont: { family: 'IBM Plex Sans', weight: '600' },
+                        bodyFont: { family: 'IBM Plex Sans' },
+                        callbacks: { label: ctx => money(ctx.parsed.y) }
                     }
                 },
                 scales: {
                     y: {
                         beginAtZero: true,
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.05)',
-                            drawBorder: false
-                        },
-                        ticks: {
-                            color: '#6b7280', // gray-500
-                            font: { family: 'Inter', size: 11 },
-                            callback: function(value) { return '₺' + value; }
-                        }
+                        border: { display: false },
+                        grid: { lineWidth: 1 },
+                        ticks: { font: { family: 'IBM Plex Sans', size: 12 }, maxTicksLimit: 5, callback: money }
                     },
                     x: {
+                        border: {},
                         grid: { display: false },
-                        ticks: {
-                            color: '#9ca3af', // gray-400
-                            font: { family: 'Inter', size: 12 }
-                        }
+                        ticks: { font: { family: 'IBM Plex Sans', size: 12 } }
                     }
                 }
             }
         });
-    }
-});
+        paint(chart);
+        document.addEventListener('themechange', () => paint(chart));
+    });
+})();
 </script>
+{% endif %}
 {% endblock %}

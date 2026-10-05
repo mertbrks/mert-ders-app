@@ -1,272 +1,134 @@
 {% extends 'base.html' %}
+{% from '_macros.html' import csrf_field, student_fields, status_label with context %}
 
-{% block title %}{{ student.full_name }} — Öğrenci Profili{% endblock %}
+{% block title %}{{ student.full_name }}{% endblock %}
 
 {% block content %}
-<!-- Top Action Bar -->
-<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-    <div class="flex items-center gap-4">
-        <a href="{{ url_for('students') }}" class="w-10 h-10 rounded-xl bg-surface-muted hover:bg-gray-700 text-gray-400 hover:text-white flex items-center justify-center transition-colors border border-white/10" title="Öğrencilere Dön">
-            <i class="bi bi-arrow-left"></i>
-        </a>
-        <h1 class="text-2xl font-display font-extrabold text-white">{{ student.full_name }}</h1>
+<div class="page-head">
+    <div>
+        <a href="{{ url_for('students') }}" class="back-link"><i class="bi bi-arrow-left" aria-hidden="true"></i> Öğrenciler</a>
+        <h1>{{ student.full_name }}</h1>
+        <p class="sub">{{ student.grade_level or 'Seviye belirtilmedi' }}</p>
     </div>
-    
-    <div class="flex items-center gap-3 w-full md:w-auto">
-        <a href="{{ wa_link }}" target="_blank" rel="noopener noreferrer" class="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-medium text-sm transition-all shadow-lg shadow-emerald-500/20 hover:-translate-y-0.5">
-            <i class="bi bi-whatsapp"></i>
-            <span>WhatsApp Mesajı</span>
-        </a>
-        {% if is_admin %}
-        <button type="button" class="w-10 h-10 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 hover:border-rose-500/30 flex items-center justify-center transition-all" onclick="toggleModal('deleteStudentModal')" title="Öğrenciyi Sil">
-            <i class="bi bi-trash3"></i>
-        </button>
+    {% if is_admin %}
+    <div class="actions">
+        <button type="button" class="btn" data-open="editStudentModal">Düzenle</button>
+        {% if wa_link %}
+        <a href="{{ wa_link }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary"><i class="bi bi-whatsapp" aria-hidden="true"></i> Veliye yaz</a>
         {% endif %}
     </div>
+    {% endif %}
 </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-    <!-- Sol Kolon: Öğrenci Detay Kartı -->
-    <div class="lg:col-span-4 flex flex-col h-full">
-        <div class="bg-surface-elevated border border-white/5 rounded-2xl shadow-glass flex flex-col h-full overflow-hidden p-6 relative group hover:border-brand-500/30 transition-colors">
-            <div class="absolute -top-10 -left-10 w-40 h-40 bg-brand-500/10 rounded-full blur-3xl group-hover:bg-brand-500/20 transition-all"></div>
-            
-            <div class="text-center pb-6 border-b border-white/5 relative z-10">
-                <div class="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white font-display font-bold text-3xl shadow-glow-brand mb-4 border border-white/20">
-                    {{ student.full_name[0] }}
-                </div>
-                <h3 class="text-xl font-bold text-white mb-2">{{ student.full_name }}</h3>
-                <span class="inline-flex items-center px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-xs font-semibold">
-                    {{ student.grade_level }}
-                </span>
-            </div>
-            
-            <!-- Bilgi Satırları -->
-            <div class="py-6 border-b border-white/5 space-y-4 relative z-10">
-                <div class="flex justify-between items-center">
-                    <span class="text-sm font-medium text-gray-500 flex items-center gap-2">
-                        <i class="bi bi-telephone text-gray-600"></i> Veli İletişim
-                    </span>
-                    <span class="text-sm font-medium text-gray-200">{{ student.parent_contact or 'Yok' }}</span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-sm font-medium text-gray-500 flex items-center gap-2">
-                        <i class="bi bi-cash-stack text-gray-600"></i> Saatlik Ücret
-                    </span>
-                    <span class="text-sm font-bold text-emerald-400">{% if is_admin %}₺{{ "{:,.0f}".format(student.hourly_rate) }}{% else %}₺***{% endif %}</span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-sm font-medium text-gray-500 flex items-center gap-2">
-                        <i class="bi bi-clock-history text-gray-600"></i> Standart Süre
-                    </span>
-                    <span class="text-sm font-medium text-gray-200">{{ student.default_duration or 60 }} dk</span>
-                </div>
-            </div>
-            
-            <!-- Bakiye Durumu Widget -->
-            <div class="my-6 p-4 rounded-xl border relative z-10 {% if pending_balance > 0 %}border-rose-500/30 bg-rose-500/10{% else %}border-emerald-500/30 bg-emerald-500/10{% endif %}">
-                <span class="block text-xs font-bold uppercase tracking-wider mb-1 {% if pending_balance > 0 %}text-rose-400{% else %}text-emerald-400{% endif %}">Bekleyen Bakiye</span>
-                <div class="font-display text-2xl font-extrabold {% if pending_balance > 0 %}text-rose-400{% else %}text-emerald-400{% endif %}">
+<div class="grid grid-profile">
+    <div class="stack">
+        <section class="panel" aria-labelledby="info-title">
+            <div class="panel-head"><h2 id="info-title">Bilgiler</h2></div>
+            <div class="panel-body">
+                <dl class="facts" style="margin-top:0">
+                    {% if is_admin %}
+                    <dt>Veli</dt>
+                    <dd class="num">{{ student.parent_contact or '—' }}</dd>
+                    <dt>Ücret</dt>
+                    <dd class="num">{{ student.hourly_rate|tl }}</dd>
+                    {% endif %}
+                    <dt>Süre</dt>
+                    <dd class="num">{{ student.default_duration or 60 }} dk</dd>
+                    <dt>Toplam ders</dt>
+                    <dd class="num">{{ stats.total_lessons or 0 }}</dd>
+                    <dt>Yapılan</dt>
+                    <dd class="num">{{ stats.done_lessons or 0 }}</dd>
+                </dl>
+
+                {% if is_admin %}
+                <div class="balance-box {% if pending_balance > 0 %}has-debt{% endif %}">
+                    <span class="label">Bekleyen ödeme</span>
                     {% if pending_balance > 0 %}
-                        {% if is_admin %}₺{{ "{:,.0f}".format(pending_balance) }}{% else %}₺***{% endif %}
+                    <div class="small-value num">{{ pending_balance|tl }}</div>
+                    <p class="hint">{{ unpaid_count }} dersin ödemesi alınmadı · <a class="link" href="{{ url_for('payments') }}">Tahsil et</a></p>
                     {% else %}
-                        Borç Yok ✓
+                    <div class="small-value">Yok</div>
+                    <p class="hint">Tüm dersler ödendi.</p>
                     {% endif %}
                 </div>
+
+                {% if student.notes %}
+                <p class="note" style="margin-top:16px">{{ student.notes }}</p>
+                {% endif %}
+                {% endif %}
             </div>
-            
-            <!-- Öğrenci Notu -->
-            {% if student.notes %}
-            <div class="p-4 rounded-xl mb-6 bg-white/[0.02] border-l-2 border-brand-500 relative z-10">
-                <small class="block text-[0.65rem] font-bold text-gray-500 uppercase tracking-wider mb-2">Özel Not</small>
-                <p class="text-sm text-gray-300 leading-relaxed">{{ student.notes }}</p>
+            {% if is_admin %}
+            <div class="panel-foot">
+                <button type="button" class="btn btn-danger btn-sm" data-open="deleteStudentModal">Öğrenciyi sil</button>
             </div>
             {% endif %}
-            
-            <div class="mt-auto relative z-10">
-                {% if is_admin %}
-                <button type="button" class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-surface-muted hover:bg-gray-700 text-gray-300 font-medium text-sm transition-colors border border-white/10" onclick="toggleModal('editStudentModal')">
-                    <i class="bi bi-pencil-square"></i>
-                    <span>Bilgileri Düzenle</span>
-                </button>
+        </section>
+    </div>
+
+    <section class="panel" aria-labelledby="history-title">
+        <div class="panel-head">
+            <h2 id="history-title">Ders geçmişi</h2>
+            <span class="meta num">{{ lessons|length }} kayıt</span>
+        </div>
+
+        {% if lessons %}
+        <ol class="rows reveal">
+            {% for lesson in lessons %}
+            <li class="history-item {% if lesson.status == 'iptal' %}is-cancelled{% endif %}">
+                <div class="history-top">
+                    <span class="history-date num">{{ lesson.lesson_date|tarih }}<small>{{ lesson.duration_minutes or 60 }} dk</small></span>
+                    {{ status_label(lesson.status) }}
+                </div>
+                {% if lesson.topic or lesson.homework or lesson.notes %}
+                <dl class="history-grid">
+                    {% if lesson.topic %}<dt>Konu</dt><dd>{{ lesson.topic }}</dd>{% endif %}
+                    {% if lesson.homework %}<dt>Ödev</dt><dd>{{ lesson.homework }}</dd>{% endif %}
+                    {% if lesson.notes %}<dt>Not</dt><dd>{{ lesson.notes }}</dd>{% endif %}
+                </dl>
                 {% endif %}
-            </div>
+            </li>
+            {% endfor %}
+        </ol>
+        {% else %}
+        <div class="empty">
+            <h3>Henüz ders yok</h3>
+            <p>Takvimden {{ student.full_name }} için ilk dersi planla; konu ve ödevler burada birikecek.</p>
+            {% if is_admin %}<a href="{{ url_for('schedule') }}" class="btn">Ders planla</a>{% endif %}
         </div>
-    </div>
-    
-    <!-- Sağ Kolon: Ders Geçmişi & Karne -->
-    <div class="lg:col-span-8 flex flex-col h-full">
-        <div class="bg-surface-elevated border border-white/5 rounded-2xl shadow-glass flex flex-col h-full overflow-hidden">
-            <div class="px-6 py-5 border-b border-white/5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white/[0.02]">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-brand-500/10 flex items-center justify-center text-brand-400">
-                        <i class="bi bi-journal-text text-xl"></i>
-                    </div>
-                    <h2 class="text-lg font-bold text-white">Ders Geçmişi (Karne)</h2>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="px-3 py-1 rounded-full bg-surface-muted border border-white/10 text-gray-300 text-xs font-semibold">Toplam: {{ stats.total_lessons or 0 }}</span>
-                    <span class="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">Tamamlanan: {{ stats.done_lessons or 0 }}</span>
-                </div>
-            </div>
-            
-            <div class="flex-grow">
-                {% if lessons %}
-                <div class="divide-y divide-white/5">
-                    {% for lesson in lessons %}
-                    <div class="p-6 hover:bg-white/[0.01] transition-colors">
-                        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-4">
-                            <div class="flex items-center gap-3">
-                                <span class="font-bold text-white text-base flex items-center">
-                                    <i class="bi bi-calendar-event mr-2 text-gray-500"></i>
-                                    {{ (lesson.lesson_date|string).replace('T', ' ') }}
-                                </span>
-                                <span class="text-xs font-medium text-gray-500 px-2 py-1 rounded bg-white/5">{{ lesson.duration_minutes or 60 }} dk</span>
-                            </div>
-                            
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border
-                                {% if lesson.status == 'yapildi' %}bg-emerald-500/10 border-emerald-500/20 text-emerald-400
-                                {% elif lesson.status == 'iptal' %}bg-rose-500/10 border-rose-500/20 text-rose-400
-                                {% else %}bg-brand-500/10 border-brand-500/20 text-brand-400{% endif %}">
-                                {% if lesson.status == 'yapildi' %}Yapıldı{% elif lesson.status == 'iptal' %}İptal{% else %}Planlandı{% endif %}
-                            </span>
-                        </div>
-                        
-                        <div class="sm:pl-7 sm:ml-2 space-y-3">
-                            {% if lesson.topic %}
-                            <div class="flex flex-col sm:flex-row sm:items-start gap-2">
-                                <span class="inline-flex shrink-0 px-2 py-0.5 rounded bg-brand-500/10 text-brand-400 text-[0.7rem] font-bold uppercase tracking-wider w-fit">Konu</span>
-                                <span class="text-sm text-gray-300 leading-relaxed">{{ lesson.topic }}</span>
-                            </div>
-                            {% endif %}
-                            
-                            {% if lesson.homework %}
-                            <div class="flex flex-col sm:flex-row sm:items-start gap-2">
-                                <span class="inline-flex shrink-0 px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 text-[0.7rem] font-bold uppercase tracking-wider w-fit">Ödev</span>
-                                <span class="text-sm text-gray-300 leading-relaxed">{{ lesson.homework }}</span>
-                            </div>
-                            {% endif %}
-                            
-                            {% if lesson.notes %}
-                            <div class="p-3 rounded-xl mt-3 bg-white/[0.02] border-l-2 border-gray-600 text-sm text-gray-400 italic">
-                                <i class="bi bi-chat-left-quote mr-1"></i> {{ lesson.notes }}
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <div class="flex flex-col items-center justify-center p-12 text-center h-full min-h-[300px]">
-                    <div class="w-16 h-16 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-center mb-4">
-                        <i class="bi bi-inbox text-3xl text-gray-500"></i>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Ders Kaydı Bulunmuyor</h3>
-                    <p class="text-sm text-gray-400">Bu öğrenci için henüz takvimde ders oluşturulmamış.</p>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
+        {% endif %}
+    </section>
 </div>
 
-<!-- Edit Student Modal -->
-<div id="editStudentModal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="fixed inset-0 bg-surface-base/80 backdrop-blur-sm transition-opacity" onclick="toggleModal('editStudentModal')"></div>
-    
-    <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
-        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-            <div class="relative transform overflow-hidden rounded-2xl bg-surface-elevated text-left shadow-2xl transition-all border border-white/10 sm:my-8 sm:w-full sm:max-w-lg">
-                
-                <div class="px-6 py-4 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
-                    <h3 class="text-lg font-bold text-white">Öğrenci Bilgilerini Güncelle</h3>
-                    <button type="button" class="text-gray-400 hover:text-white transition-colors" onclick="toggleModal('editStudentModal')">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
-                </div>
-                
-                <form action="{{ url_for('edit_student', id=student.id) }}" method="POST">
-                    <div class="px-6 py-5 space-y-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-400 mb-1.5">Ad Soyad</label>
-                            <input type="text" name="full_name" value="{{ student.full_name }}" class="w-full bg-surface-base border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all" required>
-                        </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs font-bold text-gray-400 mb-1.5">Sınıf / Seviye</label>
-                                <input type="text" name="grade_level" value="{{ student.grade_level }}" class="w-full bg-surface-base border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all" required>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-400 mb-1.5">Veli İletişim (Tel)</label>
-                                <input type="text" name="parent_contact" value="{{ student.parent_contact or '' }}" class="w-full bg-surface-base border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all">
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs font-bold text-gray-400 mb-1.5">Ders Ücreti (₺)</label>
-                                <input type="number" step="0.01" name="hourly_rate" value="{{ student.hourly_rate }}" class="w-full bg-surface-base border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all" required>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-400 mb-1.5">Standart Süre (Dk)</label>
-                                <input type="number" name="default_duration" value="{{ student.default_duration or 60 }}" class="w-full bg-surface-base border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all" required>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-400 mb-1.5">Özel Notlar</label>
-                            <textarea name="notes" rows="2" class="w-full bg-surface-base border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all">{{ student.notes or '' }}</textarea>
-                        </div>
-                    </div>
-                    <div class="px-6 py-4 border-t border-white/10 bg-white/[0.02] flex justify-end gap-3">
-                        <button type="button" class="px-4 py-2 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5 transition-colors" onclick="toggleModal('editStudentModal')">İptal</button>
-                        <button type="submit" class="px-5 py-2 rounded-xl bg-brand-500 hover:bg-brand-400 text-white text-sm font-medium transition-colors shadow-lg shadow-brand-500/20">Değişiklikleri Kaydet</button>
-                    </div>
-                </form>
-            </div>
+{% if is_admin %}
+<dialog class="modal" id="editStudentModal" aria-labelledby="editStudentTitle">
+    <form action="{{ url_for('edit_student', id=student.id) }}" method="POST">
+        {{ csrf_field() }}
+        <div class="modal-head">
+            <h2 id="editStudentTitle">Öğrenciyi düzenle</h2>
+            <button type="button" class="icon-btn" data-close aria-label="Kapat"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
         </div>
-    </div>
-</div>
-
-<!-- Delete Confirmation Modal -->
-<div id="deleteStudentModal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="fixed inset-0 bg-surface-base/80 backdrop-blur-sm transition-opacity" onclick="toggleModal('deleteStudentModal')"></div>
-    
-    <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
-        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-            <div class="relative transform overflow-hidden rounded-2xl bg-surface-elevated text-left shadow-2xl transition-all border border-rose-500/20 sm:my-8 sm:w-full sm:max-w-md">
-                
-                <div class="px-6 py-5 border-b border-white/5 bg-rose-500/5">
-                    <h3 class="text-lg font-bold text-rose-400 flex items-center gap-2">
-                        <i class="bi bi-exclamation-triangle-fill"></i> Öğrenciyi Sil
-                    </h3>
-                </div>
-                
-                <div class="px-6 py-5">
-                    <p class="text-white mb-2 text-sm"><strong>"{{ student.full_name }}"</strong> isimli öğrenciyi silmek üzeresiniz.</p>
-                    <p class="text-gray-400 text-sm">Bu işlem öğrenciye ait tüm ders geçmişini ve tahsilat kayıtlarını kalıcı olarak silecektir. Devam etmek istediğinize emin misiniz?</p>
-                </div>
-                
-                <div class="px-6 py-4 border-t border-white/5 bg-white/[0.01] flex justify-end gap-3">
-                    <button type="button" class="px-4 py-2 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5 transition-colors" onclick="toggleModal('deleteStudentModal')">Vazgeç</button>
-                    <form action="{{ url_for('delete_student', id=student.id) }}" method="POST">
-                        <button type="submit" class="px-5 py-2 rounded-xl bg-rose-500 hover:bg-rose-400 text-white text-sm font-medium transition-colors shadow-lg shadow-rose-500/20">Kalıcı Olarak Sil</button>
-                    </form>
-                </div>
-            </div>
+        <div class="modal-body">{{ student_fields(student, prefix='edit_') }}</div>
+        <div class="modal-foot">
+            <button type="button" class="btn btn-quiet" data-close>Vazgeç</button>
+            <button type="submit" class="btn btn-primary">Değişiklikleri kaydet</button>
         </div>
-    </div>
-</div>
+    </form>
+</dialog>
 
-{% endblock %}
-
-{% block scripts %}
-<script>
-function toggleModal(modalID) {
-    const modal = document.getElementById(modalID);
-    if (modal.classList.contains('hidden')) {
-        modal.classList.remove('hidden');
-    } else {
-        modal.classList.add('hidden');
-    }
-}
-</script>
+<dialog class="modal" id="deleteStudentModal" aria-labelledby="deleteStudentTitle">
+    <form action="{{ url_for('delete_student', id=student.id) }}" method="POST">
+        {{ csrf_field() }}
+        <div class="modal-head">
+            <h2 id="deleteStudentTitle">{{ student.full_name }} silinsin mi?</h2>
+        </div>
+        <div class="modal-body">
+            <p>Öğrencinin {{ stats.total_lessons or 0 }} dersi ve bu derslere ait tüm tahsilat kayıtları da silinecek. Bu işlem geri alınamaz.</p>
+        </div>
+        <div class="modal-foot">
+            <button type="button" class="btn btn-quiet" data-close>Vazgeç</button>
+            <button type="submit" class="btn btn-danger-solid">Kalıcı olarak sil</button>
+        </div>
+    </form>
+</dialog>
+{% endif %}
 {% endblock %}

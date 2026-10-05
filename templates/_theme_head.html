@@ -1,0 +1,5 @@
+{# Tema, sayfa çizilmeden önce uygulanır; aksi halde açılışta beyaz bir parlama olur #}
+<script>
+    try { if (localStorage.getItem('theme') === 'dark') document.documentElement.dataset.theme = 'dark'; } catch (e) {}
+</script>
+<meta name="theme-color" content="#F4F1EA">
